@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\Spring 2026\PRN222\Meal_Preparation_Service\src\MealPrepService.BusinessLogicLayer\MealPrepService.BusinessLogicLayer.csproj" />
+    <ProjectReference Include="..\MealPrepService.BusinessLogicLayer\MealPrepService.BusinessLogicLayer.csproj" />
   </ItemGroup>
 
 </Project>

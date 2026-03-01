@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36915.13
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meal_Preparation_System_RazorPage", "Meal_Preparation_System_RazorPage\Meal_Preparation_System_RazorPage.csproj", "{C164164E-857D-40EE-B0BD-93613381B832}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Meal_Preparation_System_RazorPage", "\..\Summer 2025\Meal_Preparation_System_RazorPage\src\Meal_Preparation_System_RazorPage\Meal_Preparation_System_RazorPage.csproj", "{C164164E-857D-40EE-B0BD-93613381B832}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MealPrepService.DataAccessLayer", "..\..\Spring 2026\PRN222\Meal_Preparation_Service\src\MealPrepService.DataAccessLayer\MealPrepService.DataAccessLayer.csproj", "{7779146D-CB72-893C-A212-A6904980E570}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MealPrepService.DataAccessLayer", "..\..\Summer 2025\Meal_Preparation_System_RazorPage\src\MealPrepService.DataAccessLayer\MealPrepService.DataAccessLayer.csproj", "{7779146D-CB72-893C-A212-A6904980E570}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MealPrepService.BusinessLogicLayer", "..\..\Spring 2026\PRN222\Meal_Preparation_Service\src\MealPrepService.BusinessLogicLayer\MealPrepService.BusinessLogicLayer.csproj", "{96C13810-9099-8668-8800-12A2D2EF1E23}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MealPrepService.BusinessLogicLayer", "..\..\Summer 2025\Meal_Preparation_System_RazorPage\src\MealPrepService.BusinessLogicLayer\MealPrepService.BusinessLogicLayer.csproj", "{96C13810-9099-8668-8800-12A2D2EF1E23}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
