@@ -1,0 +1,13 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Spring 2026\PRN222\Meal_Preparation_Service\src\MealPrepService.BusinessLogicLayer\MealPrepService.BusinessLogicLayer.csproj" />
+  </ItemGroup>
+
+</Project>
