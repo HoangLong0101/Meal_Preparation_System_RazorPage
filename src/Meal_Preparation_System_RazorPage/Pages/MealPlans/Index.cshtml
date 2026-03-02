@@ -1,0 +1,101 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.MealPlans.IndexModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Meal Plans";
+}
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="bi bi-clipboard-check me-2" style="color: var(--clr-primary);"></i>My Meal Plans</h2>
+            <p class="mb-0">AI-powered meal plans tailored to your profile</p>
+        </div>
+        <a asp-page="/MealPlans/Generate" class="btn btn-primary-custom">
+            <i class="bi bi-stars me-1"></i> Generate AI Plan
+        </a>
+    </div>
+</div>
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger d-flex align-items-center" role="alert">
+        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+        <div>@TempData["ErrorMessage"]</div>
+    </div>
+}
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success d-flex align-items-center" role="alert">
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <div>@TempData["SuccessMessage"]</div>
+    </div>
+}
+
+@if (!Model.MealPlans.Any())
+{
+    <div class="empty-state">
+        <i class="bi bi-clipboard display-1 text-muted"></i>
+        <h5 class="mt-3">No Meal Plans Yet</h5>
+        <p>Let AI create a personalized meal plan for you.</p>
+        <a asp-page="/MealPlans/Generate" class="btn btn-primary-custom mt-2">
+            <i class="bi bi-stars me-1"></i> Generate Your First Plan
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var plan in Model.MealPlans)
+        {
+            <div class="col-md-6">
+                <div class="card-modern h-100 @(plan.IsActive ? "border-start border-primary border-3" : "")">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold mb-0">@plan.PlanName</h5>
+                            <div class="d-flex gap-1">
+                                @if (plan.IsActive)
+                                {
+                                    <span class="badge badge-soft-primary">Active</span>
+                                }
+                                @if (plan.IsAiGenerated)
+                                {
+                                    <span class="badge badge-soft-success"><i class="bi bi-stars me-1"></i>AI</span>
+                                }
+                            </div>
+                        </div>
+                        <p class="text-muted small mb-1">
+                            <i class="bi bi-calendar-range me-1"></i>
+                            @plan.StartDate.ToString("MMM dd") — @plan.EndDate.ToString("MMM dd, yyyy")
+                        </p>
+                        <p class="small mb-0">
+                            <i class="bi bi-cup-hot me-1"></i> @plan.Meals.Count meals planned
+                        </p>
+                    </div>
+                    <div class="card-footer d-flex gap-2">
+                        <a asp-page="/MealPlans/Details" asp-route-id="@plan.Id" class="btn btn-outline-primary btn-sm">
+                            <i class="bi bi-eye me-1"></i>View
+                        </a>
+                        @if (!plan.IsActive)
+                        {
+                            <form method="post" asp-page-handler="SetActive">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="planId" value="@plan.Id" />
+                                <button type="submit" class="btn btn-outline-success btn-sm">
+                                    <i class="bi bi-check-lg me-1"></i>Set Active
+                                </button>
+                            </form>
+                        }
+                        <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this meal plan?');" class="ms-auto">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="planId" value="@plan.Id" />
+                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                <i class="bi bi-trash me-1"></i>Delete
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

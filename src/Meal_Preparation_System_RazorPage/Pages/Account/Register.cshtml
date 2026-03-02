@@ -1,0 +1,71 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.Account.RegisterModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Register";
+}
+
+<div class="row justify-content-center" style="margin-top: 3rem;">
+    <div class="col-md-5 col-lg-4">
+        <div class="auth-card">
+            <div class="text-center mb-4">
+                <i class="bi bi-person-plus display-4" style="color: var(--clr-success);"></i>
+                <h3 class="mt-2">Create Account</h3>
+                <p class="text-muted small">Join MealPrep today</p>
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>@TempData["ErrorMessage"]</div>
+                </div>
+            }
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Full Name</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input asp-for="Input.FullName" class="form-control" placeholder="John Doe" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Email</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                        <input asp-for="Input.Email" class="form-control" type="email" placeholder="you@example.com" required />
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                        <input asp-for="Input.Password" class="form-control" type="password" placeholder="••••••••" required />
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Confirm Password</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+                        <input asp-for="ConfirmPassword" class="form-control" type="password" placeholder="••••••••" required />
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary-custom w-100">
+                    <i class="bi bi-person-plus me-1"></i> Create Account
+                </button>
+            </form>
+
+            <div class="text-center mt-4">
+                <span class="text-muted">Already have an account?</span>
+                <a asp-page="/Account/Login" class="text-decoration-none fw-semibold">Login here</a>
+            </div>
+        </div>
+    </div>
+</div>

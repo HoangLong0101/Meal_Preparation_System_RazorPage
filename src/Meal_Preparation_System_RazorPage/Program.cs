@@ -55,6 +55,14 @@ builder.Services.AddScoped<IRecommendationEngine, AIRecommendationEngine>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
 builder.Services.AddScoped<ILLMService, GeminiRecommendationService>();
+builder.Services.AddScoped<IRecipeService, RecipeService>();
+builder.Services.AddScoped<IIngredientService, IngredientService>();
+builder.Services.AddScoped<IMealPlanService, MealPlanService>();
+builder.Services.AddScoped<IFridgeService, FridgeService>();
+builder.Services.AddScoped<IHealthProfileService, HealthProfileService>();
+builder.Services.AddScoped<IAllergyService, AllergyService>();
+builder.Services.AddScoped<IAIRecommendationService, AIRecommendationService>();
+builder.Services.AddScoped<IAIOperationLogger, AIOperationLogger>();
 
 // AI service dùng HttpClientFactory
 builder.Services.AddHttpClient<INutritionService, NutritionService>();

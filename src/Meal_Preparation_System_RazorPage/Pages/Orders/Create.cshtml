@@ -1,0 +1,68 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.Orders.CreateModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Place Order";
+}
+
+<a asp-page="/Menu/Index" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Menu</a>
+
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card-modern p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-bag-check display-4" style="color: var(--clr-primary);"></i>
+                <h3 class="fw-bold mt-2">Place Order</h3>
+            </div>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>@TempData["ErrorMessage"]</div>
+                </div>
+            }
+
+            @if (Model.SelectedMeal != null)
+            {
+                <div class="p-3 rounded-3 mb-4" style="background: var(--clr-bg); border: 1px solid var(--clr-border);">
+                    <h5 class="fw-bold mb-2">@Model.SelectedMeal.RecipeName</h5>
+                    <div class="d-flex gap-1 flex-wrap mb-2">
+                        <span class="badge badge-soft-primary">@Math.Round(Model.SelectedMeal.Recipe.TotalCalories, 0) kcal</span>
+                        <span class="badge badge-soft-success">P: @Math.Round(Model.SelectedMeal.Recipe.ProteinG, 1)g</span>
+                        <span class="badge badge-soft-warning">C: @Math.Round(Model.SelectedMeal.Recipe.CarbsG, 1)g</span>
+                        <span class="badge badge-soft-danger">F: @Math.Round(Model.SelectedMeal.Recipe.FatG, 1)g</span>
+                    </div>
+                    <div class="fw-bold fs-5 mt-2" style="color: var(--clr-primary);">@Model.SelectedMeal.Price.ToString("N0") ₫ <span class="text-muted small fw-normal">each</span></div>
+                </div>
+
+                <form method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="MenuMealId" />
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Quantity</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-hash"></i></span>
+                            <input asp-for="Quantity" class="form-control" type="number" min="1"
+                                   max="@Model.SelectedMeal.AvailableQuantity" required />
+                        </div>
+                        <small class="text-muted"><i class="bi bi-box me-1"></i>@Model.SelectedMeal.AvailableQuantity available</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Payment Method</label>
+                        <select asp-for="PaymentMethod" class="form-select form-control-modern">
+                            <option value="Cash"><i class="bi bi-cash"></i> Cash</option>
+                            <option value="VnPay">VnPay</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary-custom w-100">
+                        <i class="bi bi-check-lg me-1"></i> Confirm Order
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
