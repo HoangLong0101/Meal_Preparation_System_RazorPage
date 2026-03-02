@@ -2,13 +2,22 @@ using MealPrepService.DataAccessLayer.Repositories;
 using MealPrepService.BusinessLogicLayer.Interfaces;
 using MealPrepService.BusinessLogicLayer.Services;
 using Microsoft.EntityFrameworkCore;
+using MealPrepService.DataAccessLayer.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
+// ==========================
+// Add services to container
+// ==========================
+
 builder.Services.AddRazorPages();
 
-// Add session support (if needed for authentication/shopping cart)
+// ADD DbContext
+builder.Services.AddDbContext<MealPrepDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Add session support
 builder.Services.AddSession(options =>
 {
     options.IdleTimeout = TimeSpan.FromMinutes(30);
@@ -16,13 +25,13 @@ builder.Services.AddSession(options =>
     options.Cookie.IsEssential = true;
 });
 
-// Register Unit of Work Pattern
-builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+// ==========================
+// Register Repositories
+// ==========================
 
-// Register Generic Repository
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
-// Register Specialized Repositories (if they have specific interfaces beyond IRepository<T>)
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
 builder.Services.AddScoped<IUserSubscriptionRepository, UserSubscriptionRepository>();
 builder.Services.AddScoped<IMealPlanRepository, MealPlanRepository>();
@@ -31,7 +40,10 @@ builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IDailyMenuRepository, DailyMenuRepository>();
 builder.Services.AddScoped<IFridgeItemRepository, FridgeItemRepository>();
 
-// Register Business Logic Layer Services
+// ==========================
+// Register Business Services
+// ==========================
+
 builder.Services.AddScoped<IAccountService, AccountService>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 builder.Services.AddScoped<IMenuService, MenuService>();
@@ -40,30 +52,24 @@ builder.Services.AddScoped<IAIConfigurationService, AIConfigurationService>();
 builder.Services.AddScoped<IVnpayService, VnpayService>();
 builder.Services.AddScoped<ICustomerProfileAnalyzer, CustomerProfileAnalyzer>();
 builder.Services.AddScoped<IRecommendationEngine, AIRecommendationEngine>();
+builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
+builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+builder.Services.AddScoped<ILLMService, GeminiRecommendationService>();
 
-// Register additional services (add based on your BLL)
-// Uncomment and add services as they exist in your project:
-// builder.Services.AddScoped<IMealService, MealService>();
-// builder.Services.AddScoped<IRecipeService, RecipeService>();
-// builder.Services.AddScoped<IIngredientService, IngredientService>();
-// builder.Services.AddScoped<IHealthProfileService, HealthProfileService>();
-// builder.Services.AddScoped<IDeliveryService, DeliveryService>();
-// builder.Services.AddScoped<INotificationService, NotificationService>();
-// builder.Services.AddScoped<IMealPlanService, MealPlanService>();
-// builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
-// builder.Services.AddScoped<IFridgeService, FridgeService>();
+// AI service dùng HttpClientFactory
+builder.Services.AddHttpClient<INutritionService, NutritionService>();
 
-// Add HTTP Client for external API calls (if needed for AI or payment services)
+// Optional generic HttpClient
 builder.Services.AddHttpClient();
 
-// Add logging
+// Logging
 builder.Services.AddLogging(logging =>
 {
     logging.AddConsole();
     logging.AddDebug();
 });
 
-// Add CORS (if you need to support API calls from different origins)
+// CORS (optional)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
@@ -76,11 +82,13 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline
+// ==========================
+// Configure pipeline
+// ==========================
+
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 else
@@ -89,28 +97,16 @@ else
 }
 
 app.UseHttpsRedirection();
-
-// Enable static files (CSS, JS, images)
 app.UseStaticFiles();
-
 app.UseRouting();
 
-// Enable CORS (if configured)
-// app.UseCors("AllowAll");
-
-// Enable session (if configured)
 app.UseSession();
 
-// Enable authentication and authorization
 app.UseAuthentication();
 app.UseAuthorization();
 
-// Map Razor Pages
-app.MapStaticAssets();
-app.MapRazorPages()
-   .WithStaticAssets();
+app.MapRazorPages();
 
-// Optional: Add a default redirect
 app.MapGet("/", () => Results.Redirect("/Index"));
 
 app.Run();

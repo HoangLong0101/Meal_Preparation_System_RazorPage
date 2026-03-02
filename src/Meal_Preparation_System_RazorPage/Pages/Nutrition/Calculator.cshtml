@@ -1,0 +1,192 @@
+﻿@page
+@model Meal_Preparation_System_RazorPage.Pages.Nutrition.CalculatorModel
+@{
+    Layout = "_Layout";
+}
+
+<style>
+    .page-header {
+        margin-top: 80px !important;
+        padding: 40px 0;
+        border-radius: 12px;
+        background: linear-gradient(135deg, rgba(255,107,53,0.06), rgba(255,140,90,0.03));
+    }
+
+    .metric-card {
+        border-radius: 12px;
+        min-height: 84px;
+    }
+
+    .metric-value {
+        font-size: 1.25rem;
+        font-weight: 700;
+    }
+
+    .metric-label {
+        font-size: 0.85rem;
+        color: #666;
+    }
+</style>
+
+<div class="page-header text-center mb-4">
+    <div class="container">
+        <h1 class="page-title">Meal Nutrient Calculator</h1>
+        <p class="page-subtitle">
+            Enter your ingredients and portions — our AI will analyze nutrients and give friendly suggestions.
+        </p>
+
+        <div class="row mt-4 gx-3 justify-content-center">
+            <div class="col-6 col-sm-4 col-md-3">
+                <div class="card metric-card p-3 shadow-sm text-center">
+                    <div class="metric-label">Calories</div>
+                    <div class="metric-value">
+                        @(Model.IsCalculated? Math.Round(Model.TotalCalories, 0) + " kcal" : "—")
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-sm-4 col-md-3">
+                <div class="card metric-card p-3 shadow-sm text-center">
+                    <div class="metric-label">Protein</div>
+                    <div class="metric-value">
+                        @(Model.IsCalculated? Math.Round(Model.TotalProteinG, 1) + " g" : "—")
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-sm-4 col-md-3 mt-3 mt-sm-0">
+                <div class="card metric-card p-3 shadow-sm text-center">
+                    <div class="metric-label">Carbs</div>
+                    <div class="metric-value">
+                        @(Model.IsCalculated? Math.Round(Model.TotalCarbsG, 1) + " g" : "—")
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-6 col-sm-4 col-md-3 mt-3 mt-md-0">
+                <div class="card metric-card p-3 shadow-sm text-center">
+                    <div class="metric-label">Fat</div>
+                    <div class="metric-value">
+                        @(Model.IsCalculated? Math.Round(Model.TotalFatG, 1) + " g" : "—")
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <div class="card card-modern p-4">
+                <h5 class="mb-3">Ingredients</h5>
+
+                <form method="post">
+                    @Html.AntiForgeryToken()
+
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
+                                <tr>
+                                    <th style="width:60%">Ingredient</th>
+                                    <th style="width:20%">Amount</th>
+                                    <th style="width:15%">Unit</th>
+                                    <th></th>
+                                </tr>
+                            </thead>
+                            <tbody id="ingredients-table">
+                                @for (int i = 0; i < Model.Ingredients.Count; i++)
+                                {
+                                    <tr>
+                                        <td>
+                                            <input asp-for="Ingredients[@i].IngredientName"
+                                                   class="form-control form-control-modern"
+                                                   placeholder="e.g. chicken breast" />
+                                        </td>
+                                        <td>
+                                            <input asp-for="Ingredients[@i].Amount"
+                                                   class="form-control form-control-modern" />
+                                        </td>
+                                        <td>
+                                            <input asp-for="Ingredients[@i].Unit"
+                                                   class="form-control form-control-modern"
+                                                   placeholder="g, ml, pcs" />
+                                        </td>
+                                        <td>
+                                            <button type="button"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    onclick="removeIngredient(this)">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="button"
+                                class="btn btn-outline-secondary"
+                                onclick="addIngredient()">
+                            Add ingredient
+                        </button>
+
+                        <button id="analyze-btn"
+                                type="submit"
+                                class="btn btn-primary-custom ms-auto"
+                                disabled>
+                            Analyze nutrients
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card card-modern p-4">
+                <h5 class="mb-3">Summary</h5>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                }
+
+                @if (Model.IsCalculated)
+                {
+                    <ul class="list-group mb-3">
+                        @foreach (var r in Model.IngredientResults)
+                        {
+                            <li class="list-group-item d-flex justify-content-between">
+                                <div>
+                                    <strong>@r.IngredientName</strong><br />
+                                    <small>@r.Amount @r.Unit</small>
+                                </div>
+                                <div>
+                                    @Math.Round(r.Calories, 0) kcal
+                                </div>
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="p-3 bg-light" style="border-radius:8px; white-space:pre-wrap;">
+                        @Model.Advice
+                    </div>
+                }
+                else
+                {
+                    <div class="text-muted">
+                        Enter ingredients and click Analyze nutrients.
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // giữ nguyên JS của bạn (không cần sửa)
+    </script>
+}
