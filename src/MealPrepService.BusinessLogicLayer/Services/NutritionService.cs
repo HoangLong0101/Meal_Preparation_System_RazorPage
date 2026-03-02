@@ -68,49 +68,138 @@ namespace MealPrepService.BusinessLogicLayer.Services
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("Return ONLY valid JSON.");
+            sb.AppendLine("You are a nutrition expert. Analyze the following ingredients and return ONLY a valid JSON response with no additional text.");
+            sb.AppendLine();
+            sb.AppendLine("Return JSON in this EXACT format:");
             sb.AppendLine("""
-        {
-          "ingredients": [],
-          "totals": {},
-          "advice": ""
-        }
-        """);
+{
+  "ingredients": [
+    {
+      "name": "chicken breast",
+      "amount": 250,
+      "unit": "g",
+      "calories": 275,
+      "protein_g": 52,
+      "carbs_g": 0,
+      "fat_g": 6
+    }
+  ],
+  "totals": {
+    "calories": 275,
+    "protein_g": 52,
+    "carbs_g": 0,
+    "fat_g": 6
+  },
+  "advice": "Good protein source with minimal carbs."
+}
+""");
 
-            sb.AppendLine("Ingredients:");
+            sb.AppendLine("Analyze these ingredients and provide nutritional values per 100g or as stated:");
             foreach (var item in ingredients)
             {
-                sb.AppendLine(item.Replace("{", "").Replace("}", ""));
+                sb.AppendLine($"- {item}");
             }
+
+            sb.AppendLine();
+            sb.AppendLine("Important:");
+            sb.AppendLine("- Return ONLY the JSON, no markdown, no code blocks, no explanations");
+            sb.AppendLine("- All numeric values must be accurate");
+            sb.AppendLine("- Advice should be a single sentence with practical nutrition tips");
 
             return sb.ToString();
         }
 
         private NutritionResultDto ParseResponse(string responseText)
         {
-            using var doc = JsonDocument.Parse(responseText);
+            try
+            {
+                using var doc = JsonDocument.Parse(responseText);
 
-            var aiText = doc.RootElement
-                .GetProperty("candidates")[0]
-                .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+                var aiText = doc.RootElement
+                    .GetProperty("candidates")[0]
+                    .GetProperty("content")
+                    .GetProperty("parts")[0]
+                    .GetProperty("text")
+                    .GetString();
 
-            using var jsonDoc = JsonDocument.Parse(aiText!);
+                if (string.IsNullOrWhiteSpace(aiText))
+                    throw new InvalidOperationException("AI returned empty response.");
 
-            var result = new NutritionResultDto();
+                using var jsonDoc = JsonDocument.Parse(aiText);
 
-            var totals = jsonDoc.RootElement.GetProperty("totals");
+                var result = new NutritionResultDto();
 
-            result.TotalCalories = totals.GetProperty("calories").GetSingle();
-            result.TotalProteinG = totals.GetProperty("protein_g").GetSingle();
-            result.TotalCarbsG = totals.GetProperty("carbs_g").GetSingle();
-            result.TotalFatG = totals.GetProperty("fat_g").GetSingle();
+                // Parse totals
+                if (jsonDoc.RootElement.TryGetProperty("totals", out var totalsElement))
+                {
+                    result.TotalCalories = GetSingleValue(totalsElement, "calories");
+                    result.TotalProteinG = GetSingleValue(totalsElement, "protein_g");
+                    result.TotalCarbsG = GetSingleValue(totalsElement, "carbs_g");
+                    result.TotalFatG = GetSingleValue(totalsElement, "fat_g");
+                }
+                else
+                {
+                    throw new InvalidOperationException("Missing 'totals' in AI response.");
+                }
 
-            result.Advice = jsonDoc.RootElement.GetProperty("advice").GetString() ?? "";
+                // Parse advice
+                if (jsonDoc.RootElement.TryGetProperty("advice", out var adviceElement))
+                {
+                    result.Advice = adviceElement.GetString() ?? "";
+                }
 
-            return result;
+                // Parse ingredients
+                if (jsonDoc.RootElement.TryGetProperty("ingredients", out var ingredientsArray))
+                {
+                    if (ingredientsArray.ValueKind == JsonValueKind.Array)
+                    {
+                        foreach (var ingredient in ingredientsArray.EnumerateArray())
+                        {
+                            var ingredientDto = new IngredientNutritionDto
+                            {
+                                Name = GetStringValue(ingredient, "name"),
+                                Amount = GetSingleValue(ingredient, "amount"),
+                                Unit = GetStringValue(ingredient, "unit"),
+                                Calories = GetSingleValue(ingredient, "calories"),
+                                ProteinG = GetSingleValue(ingredient, "protein_g"),
+                                CarbsG = GetSingleValue(ingredient, "carbs_g"),
+                                FatG = GetSingleValue(ingredient, "fat_g")
+                            };
+
+                            result.Ingredients.Add(ingredientDto);
+                        }
+                    }
+                }
+
+                return result;
+            }
+            catch (JsonException ex)
+            {
+                throw new InvalidOperationException("Failed to parse AI response as JSON.", ex);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                throw new InvalidOperationException("Required field missing in AI response.", ex);
+            }
+        }
+
+        private static float GetSingleValue(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out var property))
+            {
+                if (property.ValueKind == JsonValueKind.Number)
+                    return property.GetSingle();
+            }
+            return 0f;
+        }
+
+        private static string GetStringValue(JsonElement element, string propertyName)
+        {
+            if (element.TryGetProperty(propertyName, out var property))
+            {
+                return property.GetString() ?? "";
+            }
+            return "";
         }
     }
 }

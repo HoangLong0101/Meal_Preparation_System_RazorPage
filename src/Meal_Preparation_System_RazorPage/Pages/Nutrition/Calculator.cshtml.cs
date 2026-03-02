@@ -35,9 +35,19 @@ namespace Meal_Preparation_System_RazorPage.Pages.Nutrition
         {
             try
             {
-                var result = await _nutritionService.CalculateAsync(
-                    Ingredients.Select(i =>
-                        $"{i.Amount}{i.Unit} {i.IngredientName}").ToList());
+                // Validate and format ingredients
+                var validatedIngredients = Ingredients
+                    .Where(i => !string.IsNullOrWhiteSpace(i.IngredientName) && i.Amount > 0)
+                    .Select(i => FormatIngredientForAI(i))
+                    .ToList();
+
+                if (!validatedIngredients.Any())
+                {
+                    TempData["ErrorMessage"] = "Please enter at least one ingredient with a valid amount.";
+                    return Page();
+                }
+
+                var result = await _nutritionService.CalculateAsync(validatedIngredients);
 
                 TotalCalories = result.TotalCalories;
                 TotalProteinG = result.TotalProteinG;
@@ -59,12 +69,27 @@ namespace Meal_Preparation_System_RazorPage.Pages.Nutrition
 
                 IsCalculated = true;
             }
-            catch (Exception ex)
+            catch (ArgumentException ex)
             {
                 TempData["ErrorMessage"] = ex.Message;
             }
+            catch (InvalidOperationException ex)
+            {
+                TempData["ErrorMessage"] = $"Calculation error: {ex.Message}";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "An unexpected error occurred. Please try again.";
+            }
 
             return Page();
+        }
+
+        private static string FormatIngredientForAI(IngredientInputModel ingredient)
+        {
+            // Format: "250 g chicken breast" - clear and unambiguous for AI parsing
+            var unit = string.IsNullOrWhiteSpace(ingredient.Unit) ? "g" : ingredient.Unit.Trim();
+            return $"{ingredient.Amount} {unit} {ingredient.IngredientName.Trim()}";
         }
     }
 
