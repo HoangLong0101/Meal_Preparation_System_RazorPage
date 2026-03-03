@@ -15,14 +15,6 @@
                 <h3 class="fw-bold mt-2">Place Order</h3>
             </div>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>@TempData["ErrorMessage"]</div>
-                </div>
-            }
-
             @if (Model.SelectedMeal != null)
             {
                 <div class="p-3 rounded-3 mb-4" style="background: var(--clr-bg); border: 1px solid var(--clr-border);">
@@ -36,11 +28,11 @@
                     <div class="fw-bold fs-5 mt-2" style="color: var(--clr-primary);">@Model.SelectedMeal.Price.ToString("N0") ₫ <span class="text-muted small fw-normal">each</span></div>
                 </div>
 
-                <form method="post">
+                <form method="post" data-confirm='{"title":"Confirm Order?","message":"Your order will be placed and confirmed immediately.","icon":"bi-bag-check","confirmText":"Place Order","cancelText":"Go Back"}'>
                     @Html.AntiForgeryToken()
                     <input type="hidden" asp-for="MenuMealId" />
 
-                    <div class="mb-3">
+                    <div class="mb-4">
                         <label class="form-label fw-semibold">Quantity</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="bi bi-hash"></i></span>
@@ -48,14 +40,6 @@
                                    max="@Model.SelectedMeal.AvailableQuantity" required />
                         </div>
                         <small class="text-muted"><i class="bi bi-box me-1"></i>@Model.SelectedMeal.AvailableQuantity available</small>
-                    </div>
-
-                    <div class="mb-4">
-                        <label class="form-label fw-semibold">Payment Method</label>
-                        <select asp-for="PaymentMethod" class="form-select form-control-modern">
-                            <option value="Cash"><i class="bi bi-cash"></i> Cash</option>
-                            <option value="VnPay">VnPay</option>
-                        </select>
                     </div>
 
                     <button type="submit" class="btn btn-primary-custom w-100">

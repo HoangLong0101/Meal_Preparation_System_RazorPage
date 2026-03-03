@@ -13,4 +13,5 @@ public class Account : BaseEntity
     public ICollection<MealPlan> MealPlans { get; set; } = new List<MealPlan>();
     public ICollection<FridgeItem> FridgeItems { get; set; } = new List<FridgeItem>();
     public ICollection<Order> Orders { get; set; } = new List<Order>();
+    public ICollection<FamilyMember> FamilyMembers { get; set; } = new List<FamilyMember>();
 }

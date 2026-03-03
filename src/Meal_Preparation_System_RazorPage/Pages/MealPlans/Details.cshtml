@@ -3,6 +3,27 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = Model.Plan.PlanName;
+
+    // Compute nutrition totals
+    float totalCal = 0, totalPro = 0, totalCarb = 0, totalFat = 0;
+    float doneCal = 0, donePro = 0, doneCarb = 0, doneFat = 0;
+    int totalRecipes = 0, doneRecipes = 0;
+    foreach (var meal in Model.Plan.Meals)
+    {
+        foreach (var recipe in meal.Recipes)
+        {
+            totalCal += recipe.TotalCalories; totalPro += recipe.ProteinG;
+            totalCarb += recipe.CarbsG; totalFat += recipe.FatG;
+            totalRecipes++;
+            if (recipe.Finished)
+            {
+                doneCal += recipe.TotalCalories; donePro += recipe.ProteinG;
+                doneCarb += recipe.CarbsG; doneFat += recipe.FatG;
+                doneRecipes++;
+            }
+        }
+    }
+    int calPct = totalCal > 0 ? (int)Math.Round(doneCal / totalCal * 100) : 0;
 }
 
 <a asp-page="/MealPlans/Index" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Meal Plans</a>
@@ -27,33 +48,118 @@
     </div>
 </div>
 
-@if (TempData["ErrorMessage"] != null)
+@if (Model.Plan.Meals.Any())
 {
-    <div class="alert alert-danger d-flex align-items-center" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <div>@TempData["ErrorMessage"]</div>
+    <!-- Nutrition Progress -->
+    <div class="card-modern p-4 mb-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart-line me-2" style="color: var(--clr-primary);"></i>Nutrition Progress</h5>
+        <div class="row g-3 mb-3">
+            <div class="col-6 col-md-3">
+                <div class="stat-card py-2 text-center">
+                    <div class="stat-label">Calories</div>
+                    <div class="fw-bold" style="color: var(--clr-primary);">@Math.Round(doneCal, 0) <span class="fw-normal text-muted">/ @Math.Round(totalCal, 0)</span></div>
+                    <div class="stat-label">kcal consumed</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card py-2 text-center">
+                    <div class="stat-label">Protein</div>
+                    <div class="fw-bold" style="color: var(--clr-success);">@Math.Round(donePro, 1) <span class="fw-normal text-muted">/ @Math.Round(totalPro, 1)</span></div>
+                    <div class="stat-label">grams</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card py-2 text-center">
+                    <div class="stat-label">Carbs</div>
+                    <div class="fw-bold" style="color: var(--clr-warning);">@Math.Round(doneCarb, 1) <span class="fw-normal text-muted">/ @Math.Round(totalCarb, 1)</span></div>
+                    <div class="stat-label">grams</div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card py-2 text-center">
+                    <div class="stat-label">Fat</div>
+                    <div class="fw-bold" style="color: var(--clr-danger);">@Math.Round(doneFat, 1) <span class="fw-normal text-muted">/ @Math.Round(totalFat, 1)</span></div>
+                    <div class="stat-label">grams</div>
+                </div>
+            </div>
+        </div>
+        <div class="progress" style="height: 8px;">
+            <div class="progress-bar" role="progressbar" style="width: @calPct%; background: var(--clr-success);" aria-valuenow="@calPct" aria-valuemin="0" aria-valuemax="100"></div>
+        </div>
+        <small class="text-muted mt-1 d-block">@calPct% of plan completed (@doneRecipes / @totalRecipes recipes done)</small>
     </div>
 }
+
+<!-- Add Recipe to Plan -->
+<div class="card-modern p-4 mb-4">
+    <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2" style="color: var(--clr-success);"></i>Add Recipe to Plan</h5>
+    <form method="post" asp-page-handler="AddRecipe" asp-route-id="@Model.Plan.Id">
+        @Html.AntiForgeryToken()
+        <div class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">Recipe</label>
+                <select asp-for="AddRecipeId" class="form-select form-control-modern" required>
+                    <option value="">— Select recipe —</option>
+                    @foreach (var recipe in Model.AllRecipes)
+                    {
+                        <option value="@recipe.Id">@recipe.RecipeName (@Math.Round(recipe.TotalCalories, 0) kcal)</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Date</label>
+                <input asp-for="AddServeDate" class="form-control form-control-modern" type="date"
+                       min="@Model.Plan.StartDate.ToString("yyyy-MM-dd")"
+                       max="@Model.Plan.EndDate.ToString("yyyy-MM-dd")"
+                       value="@Model.Plan.StartDate.ToString("yyyy-MM-dd")" required />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold">Meal Type</label>
+                <select asp-for="AddMealType" class="form-select form-control-modern" required>
+                    <option value="breakfast">🌅 Breakfast</option>
+                    <option value="lunch" selected>☀️ Lunch</option>
+                    <option value="dinner">🌙 Dinner</option>
+                    <option value="snack">🍿 Snack</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary-custom w-100">
+                    <i class="bi bi-plus-lg me-1"></i>Add
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
 
 @if (!Model.Plan.Meals.Any())
 {
     <div class="empty-state">
         <i class="bi bi-cup-hot display-1 text-muted"></i>
         <h5 class="mt-3">No Meals in This Plan</h5>
-        <p>This plan doesn't have any meals yet.</p>
+        <p>Use the form above to add recipes, or browse the <a asp-page="/Recipes/Index">Recipe Library</a>.</p>
     </div>
 }
 else
 {
     @foreach (var dateGroup in Model.Plan.Meals.GroupBy(m => m.ServeDate.Date).OrderBy(g => g.Key))
     {
+        var dayCal = dateGroup.Sum(m => m.Recipes.Sum(r => r.TotalCalories));
+        var dayDoneCal = dateGroup.Sum(m => m.Recipes.Where(r => r.Finished).Sum(r => r.TotalCalories));
+
         <div class="card-modern mb-3">
-            <div class="card-header bg-transparent px-4 py-3" style="border-bottom: 1px solid var(--clr-border);">
+            <div class="card-header bg-transparent px-4 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--clr-border);">
                 <strong><i class="bi bi-calendar-day me-2"></i>@dateGroup.Key.ToString("dddd, MMM dd yyyy")</strong>
+                <span class="text-muted small">@Math.Round(dayDoneCal, 0) / @Math.Round(dayCal, 0) kcal</span>
             </div>
             <div class="card-body p-4">
                 @foreach (var meal in dateGroup.OrderBy(m => m.MealType))
                 {
+                    var mealCal = meal.Recipes.Sum(r => r.TotalCalories);
+                    var mealPro = meal.Recipes.Sum(r => r.ProteinG);
+                    var mealCarb = meal.Recipes.Sum(r => r.CarbsG);
+                    var mealFatVal = meal.Recipes.Sum(r => r.FatG);
+                    var collapseId = $"meal-{meal.Id.ToString("N")}";
+
                     <div class="p-3 mb-3 rounded-3 @(meal.MealFinished ? "opacity-75" : "")" style="background: var(--clr-bg); border: 1px solid var(--clr-border);">
                         <div class="d-flex justify-content-between align-items-center">
                             <h6 class="mb-0 fw-bold">
@@ -68,36 +174,116 @@ else
                                     case "dinner":
                                         <i class="bi bi-moon me-1" style="color: var(--clr-muted);"></i>
                                         break;
+                                    default:
+                                        <i class="bi bi-cup-straw me-1" style="color: var(--clr-success);"></i>
+                                        break;
                                 }
                                 @meal.MealType.ToUpper()
                                 @if (meal.MealFinished)
                                 {
-                                    <span class="badge badge-soft-success ms-2"><i class="bi bi-check-lg me-1"></i>Done</span>
+                                    <span class="badge badge-soft-success ms-2"><i class="bi bi-check-lg me-1"></i>All Done</span>
+                                }
+                                else
+                                {
+                                    var doneCount = meal.Recipes.Count(r => r.Finished);
+                                    var totalCount = meal.Recipes.Count;
+                                    if (doneCount > 0)
+                                    {
+                                        <span class="badge badge-soft-warning ms-2">@doneCount / @totalCount done</span>
+                                    }
                                 }
                             </h6>
-                            <form method="post" asp-page-handler="ToggleMealFinished">
-                                @Html.AntiForgeryToken()
-                                <input type="hidden" name="mealId" value="@meal.Id" />
-                                <input type="hidden" name="finished" value="@(!meal.MealFinished)" />
-                                <button type="submit" class="btn btn-sm @(meal.MealFinished ? "btn-outline-secondary" : "btn-outline-success")">
-                                    <i class="bi @(meal.MealFinished ? "bi-arrow-counterclockwise" : "bi-check-lg") me-1"></i>
-                                    @(meal.MealFinished ? "Undo" : "Mark Done")
-                                </button>
-                            </form>
+                            <div class="d-flex align-items-center gap-1">
+                                <span class="badge badge-soft-primary">@Math.Round(mealCal, 0) kcal</span>
+                                <span class="badge badge-soft-success">P: @Math.Round(mealPro, 1)g</span>
+                                <span class="badge badge-soft-warning">C: @Math.Round(mealCarb, 1)g</span>
+                                <span class="badge badge-soft-danger">F: @Math.Round(mealFatVal, 1)g</span>
+                            </div>
                         </div>
                         @if (meal.Recipes.Any())
                         {
-                            <ul class="list-unstyled mt-3 mb-0">
+                            <div class="mt-3">
                                 @foreach (var recipe in meal.Recipes)
                                 {
-                                    <li class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--clr-border);">
-                                        <a asp-page="/Recipes/Details" asp-route-id="@recipe.Id" class="text-decoration-none fw-semibold">
-                                            <i class="bi bi-book me-1"></i>@recipe.RecipeName
-                                        </a>
-                                        <span class="badge badge-soft-primary">@Math.Round(recipe.TotalCalories, 0) kcal</span>
-                                    </li>
+                                    var recipeCollapseId = $"recipe-{meal.Id.ToString("N")}-{recipe.Id.ToString("N")}";
+                                    <div class="mb-2 rounded-3 @(recipe.Finished ? "opacity-75" : "")" style="border: 1px solid var(--clr-border);">
+                                        <div class="d-flex justify-content-between align-items-center p-2 px-3" style="cursor: pointer;"
+                                             data-bs-toggle="collapse" data-bs-target="#@recipeCollapseId" aria-expanded="false">
+                                            <div>
+                                                <i class="bi bi-book me-1"></i>
+                                                <span class="fw-semibold">@recipe.RecipeName</span>
+                                                <span class="badge badge-soft-primary ms-2">@Math.Round(recipe.TotalCalories, 0) kcal</span>
+                                                @if (recipe.Finished)
+                                                {
+                                                    <span class="badge badge-soft-success ms-1"><i class="bi bi-check-lg me-1"></i>Done</span>
+                                                }
+                                            </div>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <form method="post" asp-page-handler="ToggleRecipeFinished" asp-route-id="@Model.Plan.Id"
+                                                      onclick="event.stopPropagation();">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="mealId" value="@meal.Id" />
+                                                    <input type="hidden" name="recipeId" value="@recipe.Id" />
+                                                    <input type="hidden" name="finished" value="@(recipe.Finished ? "false" : "true")" />
+                                                    <button type="submit" class="btn btn-sm @(recipe.Finished ? "btn-outline-secondary" : "btn-outline-success")" title="@(recipe.Finished ? "Undo" : "Mark Done")">
+                                                        <i class="bi @(recipe.Finished ? "bi-arrow-counterclockwise" : "bi-check-lg")"></i>
+                                                    </button>
+                                                </form>
+                                                <i class="bi bi-chevron-down text-muted small"></i>
+                                                <form method="post" asp-page-handler="RemoveRecipe" asp-route-id="@Model.Plan.Id"
+                                                      data-confirm='{"title":"Remove Recipe?","message":"Remove this recipe from the meal?","icon":"bi-x-circle","confirmText":"Remove"}'
+                                                      onclick="event.stopPropagation();">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="mealId" value="@meal.Id" />
+                                                    <input type="hidden" name="recipeId" value="@recipe.Id" />
+                                                    <button type="submit" class="btn btn-outline-danger btn-sm" title="Remove recipe">
+                                                        <i class="bi bi-x-lg"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                        <div class="collapse" id="@recipeCollapseId">
+                                            <div class="p-3 pt-0" style="border-top: 1px solid var(--clr-border);">
+                                                <div class="d-flex gap-2 flex-wrap mb-2 mt-2">
+                                                    <span class="badge badge-soft-success">P: @Math.Round(recipe.ProteinG, 1)g</span>
+                                                    <span class="badge badge-soft-warning">C: @Math.Round(recipe.CarbsG, 1)g</span>
+                                                    <span class="badge badge-soft-danger">F: @Math.Round(recipe.FatG, 1)g</span>
+                                                </div>
+                                                @if (recipe.Ingredients.Any())
+                                                {
+                                                    <div class="mb-2">
+                                                        <small class="fw-semibold"><i class="bi bi-list-check me-1"></i>Ingredients:</small>
+                                                        <div class="d-flex flex-wrap gap-1 mt-1">
+                                                            @foreach (var ing in recipe.Ingredients)
+                                                            {
+                                                                <span class="ingredient-tag">
+                                                                    @ing.IngredientName (@ing.Amount @ing.Unit)
+                                                                    @if (ing.IsAllergen)
+                                                                    {
+                                                                        <i class="bi bi-exclamation-triangle ms-1" style="color: var(--clr-warning); font-size: 0.7rem;"></i>
+                                                                    }
+                                                                </span>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                }
+                                                @if (!string.IsNullOrEmpty(recipe.Instructions))
+                                                {
+                                                    <div>
+                                                        <small class="fw-semibold"><i class="bi bi-journal-text me-1"></i>Instructions:</small>
+                                                        <div class="mt-1 p-2 small rounded-3" style="background: var(--clr-surface); white-space: pre-wrap; line-height: 1.6;">@recipe.Instructions</div>
+                                                    </div>
+                                                }
+                                                <div class="mt-2">
+                                                    <a asp-page="/Recipes/Details" asp-route-id="@recipe.Id" class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-box-arrow-up-right me-1"></i>Full Recipe Page
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 }
-                            </ul>
+                            </div>
                         }
                     </div>
                 }

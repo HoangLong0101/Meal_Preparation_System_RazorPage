@@ -4,6 +4,7 @@ using MealPrepService.DataAccessLayer.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace MealPrepService.DataAccessLayer.Migrations
 {
     [DbContext(typeof(MealPrepDbContext))]
-    partial class MealPrepDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260303071701_AddFamilyMembers")]
+    partial class AddFamilyMembers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -512,9 +515,6 @@ namespace MealPrepService.DataAccessLayer.Migrations
 
                     b.Property<Guid>("RecipeId")
                         .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("Finished")
-                        .HasColumnType("bit");
 
                     b.HasKey("MealId", "RecipeId");
 

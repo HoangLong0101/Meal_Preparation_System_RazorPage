@@ -37,6 +37,7 @@ namespace MealPrepService.DataAccessLayer.Repositories
             DeliverySchedules = new Repository<DeliverySchedule>(_context);
             RevenueReports = new Repository<RevenueReport>(_context);
             AIConfigurations = new Repository<AIConfiguration>(_context);
+            FamilyMembers = new Repository<FamilyMember>(_context);
         }
 
         // Specialized repositories
@@ -59,6 +60,7 @@ namespace MealPrepService.DataAccessLayer.Repositories
         public IRepository<DeliverySchedule> DeliverySchedules { get; private set; }
         public IRepository<RevenueReport> RevenueReports { get; private set; }
         public IRepository<AIConfiguration> AIConfigurations { get; private set; }
+        public IRepository<FamilyMember> FamilyMembers { get; private set; }
 
         // AIOperationLog uses int ID, not Guid, so we need direct DbSet access
         public DbSet<AIOperationLog> AIOperationLogs => _context.Set<AIOperationLog>();

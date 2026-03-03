@@ -13,14 +13,6 @@
             <h3 class="fw-bold mb-1"><i class="bi bi-plus-circle me-2" style="color: var(--clr-primary);"></i>Create Recipe</h3>
             <p class="text-muted small mb-4">Add a new recipe with nutritional information</p>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>@TempData["ErrorMessage"]</div>
-                </div>
-            }
-
             <form method="post">
                 @Html.AntiForgeryToken()
 
@@ -63,9 +55,9 @@
     <div class="col-lg-5">
         <div class="card-modern p-4">
             <h5 class="fw-bold mb-1"><i class="bi bi-stars me-2" style="color: var(--clr-success);"></i>AI Recipe Generator</h5>
-            <p class="text-muted small mb-4">Let AI generate recipes based on your health profile and preferences.</p>
+            <p class="text-muted small mb-4">Describe what you want and let AI generate personalized recipes.</p>
 
-            <form method="post" asp-page-handler="GenerateAI">
+            <form method="post" asp-page-handler="GenerateAI" data-ai-loading="Generating AI recipes">
                 @Html.AntiForgeryToken()
 
                 <div class="mb-3">
@@ -78,6 +70,22 @@
                         <option value="Mexican">🇲🇽 Mexican</option>
                         <option value="Indian">🇮🇳 Indian</option>
                     </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="bi bi-chat-dots me-1"></i>Describe Your Recipes</label>
+                    <textarea name="description" class="form-control form-control-modern" rows="3"
+                              placeholder="e.g. High-protein breakfast ideas, quick 15-min dinners, low-carb desserts, something with chicken and broccoli..."></textarea>
+                    <small class="text-muted">Tell the AI what kind of recipes you want</small>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="bi bi-people me-1"></i>Servings</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <input name="servings" class="form-control" type="number" min="1" max="20" value="1" />
+                        <span class="input-group-text">people</span>
+                    </div>
                 </div>
 
                 <button type="submit" class="btn btn-primary-custom w-100" style="background: var(--clr-success);">

@@ -14,14 +14,6 @@
                 <p class="text-muted small">Join MealPrep today</p>
             </div>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>@TempData["ErrorMessage"]</div>
-                </div>
-            }
-
             <form method="post">
                 @Html.AntiForgeryToken()
 

@@ -146,6 +146,61 @@ namespace MealPrepService.BusinessLogicLayer.Services
             _logger.LogInformation("Menu {MenuId} published for date {MenuDate}", menuId, menu.MenuDate);
         }
 
+        public async Task DeactivateMenuAsync(Guid menuId)
+        {
+            var menu = await _unitOfWork.DailyMenus.GetByIdAsync(menuId);
+            if (menu == null)
+            {
+                throw new BusinessException($"Menu with ID {menuId} not found");
+            }
+
+            if (menu.Status != "active")
+            {
+                throw new BusinessException("Only active menus can be deactivated");
+            }
+
+            menu.Status = "inactive";
+            menu.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.DailyMenus.UpdateAsync(menu);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Menu {MenuId} deactivated for date {MenuDate}", menuId, menu.MenuDate);
+        }
+
+        public async Task ReactivateMenuAsync(Guid menuId)
+        {
+            var menu = await _unitOfWork.DailyMenus.GetByIdAsync(menuId);
+            if (menu == null)
+            {
+                throw new BusinessException($"Menu with ID {menuId} not found");
+            }
+
+            if (menu.Status != "inactive")
+            {
+                throw new BusinessException("Only inactive menus can be reactivated");
+            }
+
+            if (menu.MenuDate.Date < DateTime.Today)
+            {
+                throw new BusinessException("Cannot reactivate a menu for a past date");
+            }
+
+            menu.Status = "active";
+            menu.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.DailyMenus.UpdateAsync(menu);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Menu {MenuId} reactivated for date {MenuDate}", menuId, menu.MenuDate);
+        }
+
+        public async Task<IEnumerable<DailyMenuDto>> GetAllMenusAsync()
+        {
+            var menus = await _unitOfWork.DailyMenus.GetAllMenusAsync();
+            return menus.Select(MapToDto);
+        }
+
         public async Task UpdateMealQuantityAsync(Guid menuMealId, int newQuantity)
         {
             if (newQuantity < 0)
@@ -167,6 +222,19 @@ namespace MealPrepService.BusinessLogicLayer.Services
 
             _logger.LogInformation("Menu meal {MenuMealId} quantity updated to {NewQuantity}", 
                 menuMealId, newQuantity);
+        }
+
+        public async Task<MenuMealDto?> GetMenuMealAsync(Guid menuMealId)
+        {
+            var menuMeal = await _unitOfWork.MenuMeals.GetByIdAsync(menuMealId);
+            if (menuMeal == null)
+                return null;
+
+            // Load the recipe name since generic GetByIdAsync uses FindAsync (no includes)
+            var recipe = await _unitOfWork.Recipes.GetByIdAsync(menuMeal.RecipeId);
+            menuMeal.Recipe = recipe!;
+
+            return MapMenuMealToDto(menuMeal);
         }
 
         private DailyMenuDto MapToDto(DailyMenu dailyMenu)

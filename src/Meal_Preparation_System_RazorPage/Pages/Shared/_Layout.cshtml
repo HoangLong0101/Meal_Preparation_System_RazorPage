@@ -41,7 +41,21 @@
                                 <a class="nav-link" asp-area="" asp-page="/Orders/Index"><i class="bi bi-bag me-1"></i>Orders</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" asp-area="" asp-page="/Fridge/Index"><i class="bi bi-snow me-1"></i>Fridge</a>
+                                <a class="nav-link" asp-area="" asp-page="/Fridge/Index"><i class="bi bi-box-seam me-1"></i>Inventory</a>
+                            </li>
+                        }
+                        @if (Context.Session.GetString("Role") is "Admin" or "Manager")
+                        {
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-gear me-1"></i>Admin
+                                </a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" asp-page="/Admin/Dashboard"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Admin/MenuManagement"><i class="bi bi-calendar3 me-2"></i>Menu Management</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Admin/Orders"><i class="bi bi-bag-check me-2"></i>All Orders</a></li>
+                                    <li><a class="dropdown-item" asp-page="/Admin/Accounts"><i class="bi bi-people me-2"></i>Staff Accounts</a></li>
+                                </ul>
                             </li>
                         }
                         <li class="nav-item">
@@ -53,6 +67,9 @@
                         {
                             <li class="nav-item">
                                 <span class="nav-link navbar-user-greeting"><i class="bi bi-person-circle me-1"></i>@Context.Session.GetString("FullName")</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-area="" asp-page="/Account/Profile"><i class="bi bi-person-gear me-1"></i>Profile</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" asp-area="" asp-page="/Account/Logout"><i class="bi bi-box-arrow-right me-1"></i>Logout</a>
@@ -74,6 +91,14 @@
     </header>
     <div class="container">
         <main role="main" class="pb-3 mt-4">
+            @{
+                var toastSuccess = TempData["SuccessMessage"]?.ToString();
+                var toastError = TempData["ErrorMessage"]?.ToString();
+            }
+            @if (!string.IsNullOrEmpty(toastSuccess) || !string.IsNullOrEmpty(toastError))
+            {
+                <div id="toast-data" data-success="@toastSuccess" data-error="@toastError"></div>
+            }
             @RenderBody()
         </main>
     </div>
@@ -86,7 +111,119 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @if (Context.Session.GetString("AccountId") is string signalRAccountId)
+    {
+        var signalRRole = Context.Session.GetString("Role") ?? "";
+        <script>
+            const mealPrepConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/mealprepHub")
+                .withAutomaticReconnect()
+                .build();
+
+            // --- Menu: live quantity + sold-out updates ---
+            mealPrepConnection.on("MenuMealQuantityChanged", (mealName, newQty, isSoldOut) => {
+                if (isSoldOut)
+                    MealPrepToast.error(`🚫 "${mealName}" is now sold out!`);
+                else
+                    MealPrepToast.info(`📦 "${mealName}": ${newQty} left`);
+
+                document.dispatchEvent(new CustomEvent("menuMealQuantityChanged", {
+                    detail: { mealName, newQty, isSoldOut }
+                }));
+            });
+
+            // --- Menu: structural changes (publish / add meal / deactivate) ---
+            mealPrepConnection.on("MenuUpdated", (updateType, mealName, detail) => {
+                let msg, type;
+                if (updateType === "Published") { msg = "🍽️ New menu published!"; type = "success"; }
+                else if (updateType === "MealAdded") { msg = `🆕 "${mealName}" added to the menu.`; type = "info"; }
+                else if (updateType === "Deactivated") { msg = "🍽️ A menu has been deactivated."; type = "info"; }
+                else if (updateType === "Reactivated") { msg = "🍽️ A menu has been reactivated!"; type = "success"; }
+                else { msg = "🍽️ Menu has been updated."; type = "info"; }
+
+                // Save toast for after reload so it doesn't disappear instantly
+                sessionStorage.setItem("pendingToast", JSON.stringify({ message: msg, type }));
+
+                document.dispatchEvent(new CustomEvent("menuStructureChanged", {
+                    detail: { updateType, mealName, detail }
+                }));
+            });
+
+            // --- Order status (for customer) ---
+            mealPrepConnection.on("OrderStatusUpdated", (orderId, newStatus) => {
+                MealPrepToast.info(`Order status updated to: ${newStatus}`);
+                document.dispatchEvent(new CustomEvent("orderStatusUpdated", {
+                    detail: { orderId, newStatus }
+                }));
+            });
+
+            // --- New order placed (for admin) ---
+            mealPrepConnection.on("NewOrderPlaced", (orderId, date, total, status, itemCount) => {
+                MealPrepToast.success(`🛒 New order received! ${total} ₫`);
+                document.dispatchEvent(new CustomEvent("newOrderPlaced", {
+                    detail: { orderId, date, total, status, itemCount }
+                }));
+            });
+
+            mealPrepConnection.on("InventoryExpiryAlert", (ingredientName, daysLeft) => {
+                if (daysLeft <= 0)
+                    MealPrepToast.error(`⚠️ ${ingredientName} has expired!`);
+                else
+                    MealPrepToast.info(`🕐 ${ingredientName} expires in ${daysLeft} day(s)`);
+            });
+
+            mealPrepConnection.on("MealPlanUpdated", (planName, message) => {
+                MealPrepToast.success(`📋 ${planName}: ${message}`);
+            });
+
+            mealPrepConnection.start()
+                .then(() => {
+                    mealPrepConnection.invoke("JoinUserGroup", "@signalRAccountId");
+                    mealPrepConnection.invoke("JoinMenuGroup");
+                    @if (signalRRole is "Admin" or "Manager")
+                    {
+                        <text>mealPrepConnection.invoke("JoinAdminGroup");</text>
+                    }
+                })
+                .catch(err => console.error("SignalR connection error:", err));
+        </script>
+    }
+    else
+    {
+        <script>
+            const mealPrepConnection = new signalR.HubConnectionBuilder()
+                .withUrl("/hubs/mealprepHub")
+                .withAutomaticReconnect()
+                .build();
+
+            mealPrepConnection.on("MenuMealQuantityChanged", (mealName, newQty, isSoldOut) => {
+                if (isSoldOut)
+                    MealPrepToast.error(`🚫 "${mealName}" is now sold out!`);
+                document.dispatchEvent(new CustomEvent("menuMealQuantityChanged", {
+                    detail: { mealName, newQty, isSoldOut }
+                }));
+            });
+
+            mealPrepConnection.on("MenuUpdated", (updateType, mealName, detail) => {
+                let msg = "🍽️ Menu has been updated.", type = "info";
+                if (updateType === "Published") { msg = "🍽️ New menu published!"; type = "success"; }
+                else if (updateType === "Reactivated") { msg = "🍽️ A menu is available again!"; type = "success"; }
+
+                sessionStorage.setItem("pendingToast", JSON.stringify({ message: msg, type }));
+
+                document.dispatchEvent(new CustomEvent("menuStructureChanged", {
+                    detail: { updateType, mealName, detail }
+                }));
+            });
+
+            mealPrepConnection.start()
+                .then(() => mealPrepConnection.invoke("JoinMenuGroup"))
+                .catch(err => console.error("SignalR connection error:", err));
+        </script>
+    }
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

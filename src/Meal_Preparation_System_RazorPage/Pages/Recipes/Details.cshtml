@@ -8,7 +8,15 @@
 <a asp-page="/Recipes/Index" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Recipes</a>
 
 <div class="card-modern p-4">
-    <h2 class="fw-bold">@Model.Recipe.RecipeName</h2>
+    <div class="d-flex justify-content-between align-items-start mb-2">
+        <h2 class="fw-bold">@Model.Recipe.RecipeName</h2>
+        @if (ViewContext.HttpContext.Session.GetString("AccountId") != null)
+        {
+            <a asp-page="/MealPlans/AddMeal" asp-route-recipeId="@Model.Recipe.Id" asp-route-returnUrl="@($"/Recipes/Details/{Model.Recipe.Id}")" class="btn btn-outline-success btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Add to Meal Plan
+            </a>
+        }
+    </div>
 
     <div class="row g-3 mt-3 mb-4">
         <div class="col-6 col-sm-3">
@@ -78,3 +86,90 @@
     <h5 class="fw-bold mt-4 mb-3"><i class="bi bi-journal-text me-2"></i>Instructions</h5>
     <div class="p-3" style="background: var(--clr-bg); border-radius: var(--radius); white-space: pre-wrap; line-height: 1.7;">@Model.Recipe.Instructions</div>
 </div>
+
+@if (Model.IsLoggedIn && Model.ShoppingList.Any())
+{
+    var missing = Model.ShoppingList.Where(s => !s.IsAvailable).ToList();
+    var available = Model.ShoppingList.Where(s => s.IsAvailable).ToList();
+
+    <div class="card-modern p-4 mt-4">
+        <h5 class="fw-bold mb-3"><i class="bi bi-cart-check me-2" style="color: var(--clr-primary);"></i>Inventory Check</h5>
+        <p class="text-muted small mb-3">Compared against your current inventory</p>
+
+        <div class="row g-3 mb-3">
+            <div class="col-sm-4">
+                <div class="stat-card py-2">
+                    <div class="stat-label">Total</div>
+                    <div class="fw-bold">@Model.ShoppingList.Count ingredients</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="stat-card py-2">
+                    <div class="stat-label">You Have</div>
+                    <div class="fw-bold text-success">@available.Count ready</div>
+                </div>
+            </div>
+            <div class="col-sm-4">
+                <div class="stat-card py-2">
+                    <div class="stat-label">Need to Buy</div>
+                    <div class="fw-bold" style="color: var(--clr-danger);">@missing.Count items</div>
+                </div>
+            </div>
+        </div>
+
+        @if (missing.Any())
+        {
+            <div class="p-3 rounded-3 mb-3" style="background: rgba(220,38,38,0.04); border: 1px solid rgba(220,38,38,0.15);">
+                <h6 class="fw-bold mb-2" style="color: var(--clr-danger);"><i class="bi bi-cart-plus me-1"></i>Shopping List</h6>
+                <div class="table-responsive">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th class="small text-muted">Ingredient</th>
+                                <th class="small text-muted">Required</th>
+                                <th class="small text-muted">You Have</th>
+                                <th class="small text-muted">Need to Buy</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in missing)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@item.IngredientName</td>
+                                    <td>@item.RequiredAmount @item.Unit</td>
+                                    <td>
+                                        @if (item.IsPartial)
+                                        {
+                                            <span class="text-warning">@item.AvailableAmount @item.Unit</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
+                                    </td>
+                                    <td><span class="fw-bold" style="color: var(--clr-danger);">@Math.Round(item.MissingAmount, 1) @item.Unit</span></td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        }
+
+        @if (available.Any())
+        {
+            <div class="p-3 rounded-3" style="background: rgba(22,163,74,0.04); border: 1px solid rgba(22,163,74,0.15);">
+                <h6 class="fw-bold mb-2 text-success"><i class="bi bi-check-circle me-1"></i>Available in Inventory</h6>
+                <div class="d-flex flex-wrap gap-1">
+                    @foreach (var item in available)
+                    {
+                        <span class="ingredient-tag">
+                            <i class="bi bi-check-circle text-success me-1" style="font-size: 0.7rem;"></i>
+                            @item.IngredientName (@item.AvailableAmount @item.Unit)
+                        </span>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

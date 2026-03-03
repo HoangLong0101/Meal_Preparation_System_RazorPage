@@ -10,5 +10,6 @@ public interface IOrderService
     Task<OrderDto> ConfirmCashPaymentAsync(Guid orderId, Guid deliveryManId);
     Task<OrderDto> GetByIdAsync(Guid orderId);
     Task<IEnumerable<OrderDto>> GetByAccountIdAsync(Guid accountId);
+    Task<IEnumerable<OrderDto>> GetAllOrdersAsync();
     Task UpdateOrderStatusAsync(Guid orderId, string status);
 }

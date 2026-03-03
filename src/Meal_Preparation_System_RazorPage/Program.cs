@@ -3,6 +3,7 @@ using MealPrepService.BusinessLogicLayer.Interfaces;
 using MealPrepService.BusinessLogicLayer.Services;
 using Microsoft.EntityFrameworkCore;
 using MealPrepService.DataAccessLayer.Data;
+using Meal_Preparation_System_RazorPage.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // ==========================
 
 builder.Services.AddRazorPages();
+builder.Services.AddSignalR();
 
 // ADD DbContext
 builder.Services.AddDbContext<MealPrepDbContext>(options =>
@@ -61,6 +63,7 @@ builder.Services.AddScoped<IMealPlanService, MealPlanService>();
 builder.Services.AddScoped<IFridgeService, FridgeService>();
 builder.Services.AddScoped<IHealthProfileService, HealthProfileService>();
 builder.Services.AddScoped<IAllergyService, AllergyService>();
+builder.Services.AddScoped<IFamilyMemberService, FamilyMemberService>();
 builder.Services.AddScoped<IAIRecommendationService, AIRecommendationService>();
 builder.Services.AddScoped<IAIOperationLogger, AIOperationLogger>();
 
@@ -114,6 +117,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapRazorPages();
+app.MapHub<MealPrepHub>("/hubs/mealprepHub");
 
 app.MapGet("/", () => Results.Redirect("/Index"));
 

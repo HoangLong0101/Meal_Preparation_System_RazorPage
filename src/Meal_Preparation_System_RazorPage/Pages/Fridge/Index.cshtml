@@ -2,27 +2,75 @@
 @model Meal_Preparation_System_RazorPage.Pages.Fridge.IndexModel
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "My Fridge";
+    ViewData["Title"] = "My Inventory";
 }
 
 <div class="page-header">
-    <h2><i class="bi bi-snow me-2" style="color: var(--clr-primary);"></i>My Fridge</h2>
-    <p class="mb-0">Track your ingredients and expiry dates</p>
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="bi bi-box-seam me-2" style="color: var(--clr-primary);"></i>My Inventory</h2>
+            <p class="mb-0">Track your ingredients and expiry dates</p>
+        </div>
+        <a asp-page="/Fridge/SmartMeals" class="btn btn-primary-custom" style="background: var(--clr-warning); color: #1e293b;">
+            <i class="bi bi-lightbulb me-1"></i> Smart Meals
+        </a>
+    </div>
 </div>
 
-@if (TempData["ErrorMessage"] != null)
+@if (ViewContext.HttpContext.Session.GetString("ShoppingList") is string shoppingListJson)
 {
-    <div class="alert alert-danger d-flex align-items-center" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <div>@TempData["ErrorMessage"]</div>
-    </div>
-}
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <div>@TempData["SuccessMessage"]</div>
-    </div>
+    var shoppingItems = System.Text.Json.JsonSerializer.Deserialize<List<MealPrepService.BusinessLogicLayer.Interfaces.ShoppingListItem>>(shoppingListJson);
+    if (shoppingItems != null && shoppingItems.Any())
+    {
+        <div class="card-modern p-4 mb-4" style="border-left: 4px solid var(--clr-warning);">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="fw-bold mb-0"><i class="bi bi-cart-plus me-2" style="color: var(--clr-warning);"></i>Shopping List</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge badge-soft-warning">@shoppingItems.Count item(s) needed</span>
+                    <form method="post" asp-page-handler="ConfirmShoppingList"
+                          data-confirm='{"title":"Confirm Purchase?","message":"These ingredients will be added to your inventory with a 7-day expiry. Continue?","icon":"bi-cart-check","confirmText":"Confirm"}'>
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success btn-sm" title="Confirm purchase and add to inventory">
+                            <i class="bi bi-cart-check me-1"></i>Confirm Purchase
+                        </button>
+                    </form>
+                </div>
+            </div>
+            <p class="text-muted small mb-2">These ingredients are missing from your inventory for a meal you added:</p>
+            <div class="table-responsive">
+                <table class="table table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th class="small fw-semibold">Ingredient</th>
+                            <th class="small fw-semibold">Amount</th>
+                            <th class="small fw-semibold">Priority</th>
+                            <th class="small fw-semibold">Note</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in shoppingItems)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@item.IngredientName</td>
+                                <td>@item.NeededAmount @item.Unit</td>
+                                <td>
+                                    @if (item.IsEssential)
+                                    {
+                                        <span class="badge badge-soft-danger">Required</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-soft-muted">Optional</span>
+                                    }
+                                </td>
+                                <td class="small text-muted fst-italic">@(item.SubstituteNote ?? "—")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
 }
 
 <div class="row g-4">
@@ -51,8 +99,8 @@
         @if (!Model.FridgeItems.Any())
         {
             <div class="empty-state">
-                <i class="bi bi-snow display-1 text-muted"></i>
-                <h5 class="mt-3">Your Fridge is Empty</h5>
+                <i class="bi bi-box-seam display-1 text-muted"></i>
+                <h5 class="mt-3">Your Inventory is Empty</h5>
                 <p>Add ingredients to start tracking what you have.</p>
             </div>
         }
@@ -106,7 +154,7 @@
                                         }
                                     </td>
                                     <td>
-                                        <form method="post" asp-page-handler="Remove" onsubmit="return confirm('Remove this item?');">
+                                        <form method="post" asp-page-handler="Remove" data-confirm='{"title":"Remove Item?","message":"This item will be removed from your inventory.","icon":"bi-trash","confirmText":"Remove"}'>
                                             @Html.AntiForgeryToken()
                                             <input type="hidden" name="itemId" value="@item.Id" />
                                             <button type="submit" class="btn btn-outline-danger btn-sm">
@@ -155,7 +203,7 @@
                 </div>
 
                 <button type="submit" class="btn btn-primary-custom w-100" style="background: var(--clr-success);">
-                    <i class="bi bi-plus-lg me-1"></i> Add to Fridge
+                    <i class="bi bi-plus-lg me-1"></i> Add to Inventory
                 </button>
             </form>
         </div>

@@ -7,26 +7,18 @@
 
 <a asp-page="/MealPlans/Index" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Meal Plans</a>
 
-<div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
+<div class="row g-4">
+    <div class="col-lg-7">
         <div class="card-modern p-4">
             <div class="text-center mb-4">
                 <i class="bi bi-stars display-4" style="color: var(--clr-success);"></i>
                 <h3 class="fw-bold mt-2">Generate AI Meal Plan</h3>
                 <p class="text-muted small">
-                    AI will create a personalized meal plan based on your health profile, allergies, and preferences.
+                    Describe what you want and AI will create a personalized meal plan based on your profile.
                 </p>
             </div>
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>@TempData["ErrorMessage"]</div>
-                </div>
-            }
-
-            <form method="post">
+            <form method="post" data-ai-loading="Generating your personalized meal plan">
                 @Html.AntiForgeryToken()
 
                 <div class="mb-3">
@@ -37,7 +29,7 @@
                     </div>
                 </div>
 
-                <div class="row mb-4 g-3">
+                <div class="row mb-3 g-3">
                     <div class="col-md-6">
                         <label class="form-label fw-semibold">Start Date</label>
                         <div class="input-group">
@@ -54,10 +46,111 @@
                     </div>
                 </div>
 
+                <div class="mb-4">
+                    <label class="form-label fw-semibold"><i class="bi bi-chat-dots me-1"></i>Describe Your Ideal Meals</label>
+                    <textarea asp-for="Description" class="form-control form-control-modern" rows="4"
+                              placeholder="e.g. I want high-protein meals for muscle building, mostly Asian cuisine. Include a light breakfast and hearty dinner. I'm training for a marathon so I need extra carbs on weekdays."></textarea>
+                    <small class="text-muted">Be as specific as you want — the AI uses this along with your health profile to generate meals</small>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold"><i class="bi bi-people me-1"></i>Cooking For</label>
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-person"></i></span>
+                        <select asp-for="Servings" class="form-select form-control-modern">
+                            @for (int i = 1; i <= Model.MaxFamilySize; i++)
+                            {
+                                <option value="@i">@i @(i == 1 ? "person" : "people")</option>
+                            }
+                        </select>
+                    </div>
+                    @if (Model.FamilyMembers.Any())
+                    {
+                        <small class="text-muted">
+                            Family: You + @string.Join(", ", Model.FamilyMembers.Select(m => m.Name))
+                        </small>
+                    }
+                </div>
+
                 <button type="submit" class="btn btn-primary-custom w-100" style="background: var(--clr-success);">
                     <i class="bi bi-stars me-1"></i> Generate Meal Plan
                 </button>
             </form>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        @if (Model.HasProfile)
+        {
+            <div class="card-modern p-4 mb-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-person-check me-2" style="color: var(--clr-success);"></i>Your Profile</h5>
+                <p class="text-muted small mb-3">AI will use this information to personalize your plan</p>
+
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <div class="stat-card py-2">
+                            <div class="stat-label">Age</div>
+                            <div class="fw-bold">@Model.UserProfile!.Age</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card py-2">
+                            <div class="stat-label">Weight</div>
+                            <div class="fw-bold">@Model.UserProfile.Weight kg</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stat-card py-2">
+                            <div class="stat-label">Goal</div>
+                            <div class="fw-bold">@(Model.UserProfile.CalorieGoal?.ToString() ?? "—") kcal</div>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrEmpty(Model.UserProfile.DietaryRestrictions))
+                {
+                    <div class="mb-2">
+                        <span class="badge badge-soft-primary"><i class="bi bi-exclude me-1"></i>@Model.UserProfile.DietaryRestrictions</span>
+                    </div>
+                }
+
+                @if (Model.UserProfile.Allergies.Any())
+                {
+                    <div class="d-flex flex-wrap gap-1">
+                        @foreach (var allergy in Model.UserProfile.Allergies)
+                        {
+                            <span class="badge badge-soft-warning"><i class="bi bi-shield-exclamation me-1"></i>@allergy</span>
+                        }
+                    </div>
+                }
+
+                <div class="mt-3">
+                    <a asp-page="/Account/Profile" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil-square me-1"></i>Edit Profile
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card-modern p-4 mb-4" style="border-left: 4px solid var(--clr-warning);">
+                <h5 class="fw-bold mb-2"><i class="bi bi-exclamation-triangle me-2" style="color: var(--clr-warning);"></i>No Profile Found</h5>
+                <p class="text-muted small mb-3">Set up your health profile so AI can generate better personalized meals for you.</p>
+                <a asp-page="/Account/Profile" class="btn btn-primary-custom btn-sm" style="background: var(--clr-warning);">
+                    <i class="bi bi-person-plus me-1"></i> Set Up Profile
+                </a>
+            </div>
+        }
+
+        <div class="card-modern p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-lightbulb me-2" style="color: var(--clr-primary);"></i>Tips</h5>
+            <ul class="list-unstyled mb-0">
+                <li class="mb-2 small"><i class="bi bi-check-circle text-success me-2"></i>Mention preferred cuisines (Vietnamese, Japanese, etc.)</li>
+                <li class="mb-2 small"><i class="bi bi-check-circle text-success me-2"></i>Specify meal intensity (light, hearty, snack-heavy)</li>
+                <li class="mb-2 small"><i class="bi bi-check-circle text-success me-2"></i>Include fitness goals (muscle building, weight loss)</li>
+                <li class="mb-2 small"><i class="bi bi-check-circle text-success me-2"></i>Request cooking complexity (quick, elaborate)</li>
+                <li class="small"><i class="bi bi-check-circle text-success me-2"></i>Note schedule constraints (busy mornings, meal prep Sundays)</li>
+            </ul>
         </div>
     </div>
 </div>

@@ -3,6 +3,7 @@ using MealPrepService.BusinessLogicLayer.Exceptions;
 using MealPrepService.BusinessLogicLayer.Interfaces;
 using MealPrepService.DataAccessLayer.Entities;
 using MealPrepService.DataAccessLayer.Repositories;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace MealPrepService.BusinessLogicLayer.Services
@@ -487,23 +488,22 @@ namespace MealPrepService.BusinessLogicLayer.Services
 
         private MealDto MapMealToDto(Meal meal)
         {
+            var mealRecipes = meal.MealRecipes?.Where(mr => mr.Recipe != null).ToList() ?? [];
+
             var dto = new MealDto
             {
                 Id = meal.Id,
                 PlanId = meal.PlanId,
                 MealType = meal.MealType,
                 ServeDate = meal.ServeDate,
-                MealFinished = meal.MealFinished,
-                Recipes = new List<RecipeDto>()
+                MealFinished = mealRecipes.Any() && mealRecipes.All(mr => mr.Finished),
+                Recipes = mealRecipes.Select(mr =>
+                {
+                    var recipeDto = MapRecipeToDto(mr.Recipe);
+                    recipeDto.Finished = mr.Finished;
+                    return recipeDto;
+                }).ToList()
             };
-
-            if (meal.MealRecipes != null && meal.MealRecipes.Any())
-            {
-                dto.Recipes = meal.MealRecipes
-                    .Where(mr => mr.Recipe != null)
-                    .Select(mr => MapRecipeToDto(mr.Recipe))
-                    .ToList();
-            }
 
             return dto;
         }
@@ -549,11 +549,168 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 throw new AuthorizationException("You don't have permission to modify this meal");
             }
 
+            // Only deduct inventory when marking as finished (not when undoing)
+            if (finished && !meal.MealFinished)
+            {
+                await DeductIngredientsFromInventoryAsync(mealId, accountId);
+            }
+
             meal.MealFinished = finished;
             await _unitOfWork.SaveChangesAsync();
 
             _logger.LogInformation("Meal {MealId} marked as {Status} by account {AccountId}", 
                 mealId, finished ? "finished" : "not finished", accountId);
+        }
+
+        public async Task MarkRecipeInMealAsFinishedAsync(Guid mealId, Guid recipeId, Guid accountId, bool finished)
+        {
+            var meal = await _unitOfWork.Meals.GetByIdAsync(mealId);
+            if (meal == null)
+            {
+                throw new NotFoundException($"Meal with ID {mealId} not found");
+            }
+
+            var mealPlan = await _unitOfWork.MealPlans.GetByIdAsync(meal.PlanId);
+            if (mealPlan == null || mealPlan.AccountId != accountId)
+            {
+                throw new AuthorizationException("You don't have permission to modify this meal");
+            }
+
+            var mealRecipe = await _unitOfWork.MealRecipes
+                .FirstOrDefaultAsync(mr => mr.MealId == mealId && mr.RecipeId == recipeId);
+
+            if (mealRecipe == null)
+            {
+                throw new NotFoundException($"Recipe not found in this meal");
+            }
+
+            if (finished && !mealRecipe.Finished)
+            {
+                await DeductRecipeIngredientsFromInventoryAsync(recipeId, accountId);
+            }
+
+            mealRecipe.Finished = finished;
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Recipe {RecipeId} in meal {MealId} marked as {Status} by account {AccountId}",
+                recipeId, mealId, finished ? "finished" : "not finished", accountId);
+        }
+
+        private async Task DeductRecipeIngredientsFromInventoryAsync(Guid recipeId, Guid accountId)
+        {
+            var recipeIngredients = await _unitOfWork.RecipeIngredients
+                .Where(ri => ri.RecipeId == recipeId)
+                .ToListAsync();
+
+            if (!recipeIngredients.Any())
+                return;
+
+            var fridgeItems = await _unitOfWork.FridgeItems.GetByAccountIdAsync(accountId);
+            var fridgeList = fridgeItems.ToList();
+
+            foreach (var ri in recipeIngredients)
+            {
+                var remainingToDeduct = ri.Amount;
+
+                var matchingItems = fridgeList
+                    .Where(fi => fi.IngredientId == ri.IngredientId)
+                    .OrderBy(fi => fi.ExpiryDate)
+                    .ToList();
+
+                foreach (var fridgeItem in matchingItems)
+                {
+                    if (remainingToDeduct <= 0)
+                        break;
+
+                    if (fridgeItem.CurrentAmount <= remainingToDeduct)
+                    {
+                        remainingToDeduct -= fridgeItem.CurrentAmount;
+                        await _unitOfWork.FridgeItems.DeleteAsync(fridgeItem.Id);
+                    }
+                    else
+                    {
+                        fridgeItem.CurrentAmount -= remainingToDeduct;
+                        fridgeItem.UpdatedAt = DateTime.UtcNow;
+                        await _unitOfWork.FridgeItems.UpdateAsync(fridgeItem);
+                        remainingToDeduct = 0;
+                    }
+                }
+            }
+        }
+
+        private async Task DeductIngredientsFromInventoryAsync(Guid mealId, Guid accountId)
+        {
+            // Get all recipe IDs for this meal
+            var recipeIds = await _unitOfWork.MealRecipes
+                .Where(mr => mr.MealId == mealId)
+                .Select(mr => mr.RecipeId)
+                .ToListAsync();
+
+            if (!recipeIds.Any())
+                return;
+
+            // Get all recipe ingredients for those recipes
+            var recipeIngredients = await _unitOfWork.RecipeIngredients
+                .Where(ri => recipeIds.Contains(ri.RecipeId))
+                .ToListAsync();
+
+            if (!recipeIngredients.Any())
+                return;
+
+            // Aggregate required amounts per ingredient
+            var requiredAmounts = recipeIngredients
+                .GroupBy(ri => ri.IngredientId)
+                .Select(g => new { IngredientId = g.Key, TotalAmount = g.Sum(ri => ri.Amount) })
+                .ToList();
+
+            // Get the user's fridge items
+            var fridgeItems = await _unitOfWork.FridgeItems.GetByAccountIdAsync(accountId);
+            var fridgeList = fridgeItems.ToList();
+
+            foreach (var required in requiredAmounts)
+            {
+                var remainingToDeduct = required.TotalAmount;
+
+                // Find matching fridge items for this ingredient, sorted by expiry (use expiring first)
+                var matchingItems = fridgeList
+                    .Where(fi => fi.IngredientId == required.IngredientId)
+                    .OrderBy(fi => fi.ExpiryDate)
+                    .ToList();
+
+                foreach (var fridgeItem in matchingItems)
+                {
+                    if (remainingToDeduct <= 0)
+                        break;
+
+                    if (fridgeItem.CurrentAmount <= remainingToDeduct)
+                    {
+                        // Use up this fridge item entirely
+                        remainingToDeduct -= fridgeItem.CurrentAmount;
+                        await _unitOfWork.FridgeItems.DeleteAsync(fridgeItem.Id);
+                        _logger.LogInformation(
+                            "Removed fridge item {ItemId} ({IngredientName}, {Amount} used up)",
+                            fridgeItem.Id, fridgeItem.Ingredient?.IngredientName, fridgeItem.CurrentAmount);
+                    }
+                    else
+                    {
+                        // Reduce the quantity
+                        fridgeItem.CurrentAmount -= remainingToDeduct;
+                        fridgeItem.UpdatedAt = DateTime.UtcNow;
+                        await _unitOfWork.FridgeItems.UpdateAsync(fridgeItem);
+                        _logger.LogInformation(
+                            "Reduced fridge item {ItemId} ({IngredientName}) by {Deducted}, remaining: {Remaining}",
+                            fridgeItem.Id, fridgeItem.Ingredient?.IngredientName, remainingToDeduct, fridgeItem.CurrentAmount);
+                        remainingToDeduct = 0;
+                    }
+                }
+
+                if (remainingToDeduct > 0)
+                {
+                    _logger.LogWarning(
+                        "Ingredient {IngredientId} required {Amount} more than available in inventory",
+                        required.IngredientId, remainingToDeduct);
+                }
+            }
         }
     }
 }

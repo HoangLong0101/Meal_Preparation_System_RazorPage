@@ -705,14 +705,13 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 // Sort ingredients by expiry date (soonest first) if prioritizing expiring items
                 var sortedIngredients = request.PrioritizeExpiring 
                     ? request.AvailableIngredients
-                        .Where(i => !i.IsExpired)
                         .OrderBy(i => i.DaysUntilExpiry)
                         .ToList()
-                    : request.AvailableIngredients
-                        .Where(i => !i.IsExpired)
-                        .ToList();
+                    : request.AvailableIngredients.ToList();
 
+                var expiredIngredients = sortedIngredients.Where(i => i.IsExpired).ToList();
                 var expiringIngredients = sortedIngredients.Where(i => i.IsExpiringSoon).ToList();
+                var freshIngredients = sortedIngredients.Where(i => !i.IsExpired && !i.IsExpiringSoon).ToList();
 
                 // Build context-aware prompt
                 var promptBuilder = new StringBuilder();
@@ -740,6 +739,17 @@ namespace MealPrepService.BusinessLogicLayer.Services
 
                 // Inventory section - prioritize expiring items
                 promptBuilder.AppendLine("AVAILABLE INVENTORY (sorted by expiry date - USE EXPIRING ITEMS FIRST!):");
+
+                if (expiredIngredients.Any())
+                {
+                    promptBuilder.AppendLine("🔴 RECENTLY EXPIRED (use at your discretion, still edible if within 1-2 days):");
+                    foreach (var ing in expiredIngredients)
+                    {
+                        promptBuilder.AppendLine($"  - {ing.Name}: {ing.AvailableAmount} {ing.Unit} (expired {Math.Abs(ing.DaysUntilExpiry)} days ago)");
+                    }
+                    promptBuilder.AppendLine();
+                }
+
                 if (expiringIngredients.Any())
                 {
                     promptBuilder.AppendLine("⚠️ EXPIRING SOON (PRIORITY - must use these!):");
@@ -751,7 +761,7 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 }
 
                 promptBuilder.AppendLine("Other available ingredients:");
-                foreach (var ing in sortedIngredients.Where(i => !i.IsExpiringSoon))
+                foreach (var ing in freshIngredients)
                 {
                     promptBuilder.AppendLine($"  - {ing.Name}: {ing.AvailableAmount} {ing.Unit} (expires in {ing.DaysUntilExpiry} days)");
                 }

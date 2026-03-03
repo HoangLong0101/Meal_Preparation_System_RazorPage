@@ -1,0 +1,103 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.MealPlans.AddMealModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Add to Meal Plan";
+}
+
+<a asp-page="/MealPlans/Index" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Meal Plans</a>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card-modern p-4">
+            <div class="text-center mb-4">
+                <i class="bi bi-plus-circle display-4" style="color: var(--clr-primary);"></i>
+                <h3 class="fw-bold mt-2">Add to Meal Plan</h3>
+            </div>
+
+            @if (Model.Recipe != null)
+            {
+                <div class="p-3 mb-4 rounded-3" style="background: var(--clr-bg); border: 1px solid var(--clr-border);">
+                    <h5 class="fw-bold mb-1"><i class="bi bi-book me-2"></i>@Model.Recipe.RecipeName</h5>
+                    <div class="d-flex gap-2 flex-wrap">
+                        <span class="badge badge-soft-primary">@Math.Round(Model.Recipe.TotalCalories, 0) kcal</span>
+                        <span class="badge badge-soft-success">P: @Math.Round(Model.Recipe.ProteinG, 1)g</span>
+                        <span class="badge badge-soft-warning">C: @Math.Round(Model.Recipe.CarbsG, 1)g</span>
+                        <span class="badge badge-soft-danger">F: @Math.Round(Model.Recipe.FatG, 1)g</span>
+                    </div>
+                </div>
+            }
+
+            <form method="post">
+                @Html.AntiForgeryToken()
+                <input type="hidden" asp-for="RecipeId" />
+                <input type="hidden" asp-for="ReturnUrl" />
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold"><i class="bi bi-clipboard-check me-1"></i>Select Meal Plan</label>
+                    <select asp-for="SelectedPlanId" class="form-select form-control-modern" required>
+                        <option value="">— Choose a plan —</option>
+                        @foreach (var plan in Model.MealPlans)
+                        {
+                            <option value="@plan.Id"
+                                    data-start="@plan.StartDate.ToString("yyyy-MM-dd")"
+                                    data-end="@plan.EndDate.ToString("yyyy-MM-dd")">
+                                @plan.PlanName (@plan.StartDate.ToString("MMM dd") — @plan.EndDate.ToString("MMM dd"))
+                                @(plan.IsActive ? " ★ Active" : "")
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="row mb-3 g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-calendar-event me-1"></i>Serve Date</label>
+                        <input asp-for="ServeDate" class="form-control form-control-modern" type="date" id="serveDateInput" required />
+                        <small class="text-muted" id="dateHint">Pick a date within the plan range</small>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold"><i class="bi bi-clock me-1"></i>Meal Type</label>
+                        <select asp-for="MealType" class="form-select form-control-modern" required>
+                            <option value="breakfast">🌅 Breakfast</option>
+                            <option value="lunch" selected>☀️ Lunch</option>
+                            <option value="dinner">🌙 Dinner</option>
+                            <option value="snack">🍿 Snack</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary-custom w-100">
+                    <i class="bi bi-plus-lg me-1"></i> Add to Plan
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Update date constraints when plan selection changes
+        document.getElementById('SelectedPlanId').addEventListener('change', function () {
+            const selected = this.options[this.selectedIndex];
+            const dateInput = document.getElementById('serveDateInput');
+            const hint = document.getElementById('dateHint');
+
+            if (selected.value) {
+                const start = selected.dataset.start;
+                const end = selected.dataset.end;
+                dateInput.min = start;
+                dateInput.max = end;
+                hint.textContent = `Date must be between ${start} and ${end}`;
+
+                // Set date to plan start if current date is out of range
+                if (dateInput.value < start || dateInput.value > end) {
+                    dateInput.value = start;
+                }
+            } else {
+                dateInput.removeAttribute('min');
+                dateInput.removeAttribute('max');
+                hint.textContent = 'Pick a date within the plan range';
+            }
+        });
+    </script>
+}

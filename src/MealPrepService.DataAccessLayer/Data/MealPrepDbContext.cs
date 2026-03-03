@@ -29,6 +29,7 @@ public class MealPrepDbContext : DbContext
     public DbSet<RevenueReport> RevenueReports { get; set; }
     public DbSet<AIConfiguration> AIConfigurations { get; set; }
     public DbSet<AIOperationLog> AIOperationLogs { get; set; }
+    public DbSet<FamilyMember> FamilyMembers { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -71,6 +72,7 @@ public class MealPrepDbContext : DbContext
         modelBuilder.Entity<RevenueReport>().HasKey(e => e.Id).IsClustered(false);
         modelBuilder.Entity<AIConfiguration>().HasKey(e => e.Id).IsClustered(false);
         modelBuilder.Entity<AIOperationLog>().HasKey(e => e.Id).IsClustered(false);
+        modelBuilder.Entity<FamilyMember>().HasKey(e => e.Id).IsClustered(false);
     }
     
     private void ConfigureAIEntities(ModelBuilder modelBuilder)
@@ -147,6 +149,18 @@ public class MealPrepDbContext : DbContext
             .WithOne(fi => fi.Ingredient)
             .HasForeignKey(fi => fi.IngredientId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // One-to-many: Account to FamilyMembers
+        modelBuilder.Entity<Account>()
+            .HasMany(a => a.FamilyMembers)
+            .WithOne(fm => fm.Account)
+            .HasForeignKey(fm => fm.AccountId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<FamilyMember>()
+            .Property(fm => fm.Name)
+            .IsRequired()
+            .HasMaxLength(100);
     }
     
     private void ConfigureMealPlanRelationships(ModelBuilder modelBuilder)

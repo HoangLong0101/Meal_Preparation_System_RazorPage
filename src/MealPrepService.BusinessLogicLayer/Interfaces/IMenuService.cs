@@ -9,6 +9,10 @@ namespace MealPrepService.BusinessLogicLayer.Interfaces
         Task<IEnumerable<DailyMenuDto>> GetWeeklyMenuAsync(DateTime startDate);
         Task AddMealToMenuAsync(Guid menuId, MenuMealDto menuMealDto);
         Task PublishMenuAsync(Guid menuId);
+        Task DeactivateMenuAsync(Guid menuId);
+        Task ReactivateMenuAsync(Guid menuId);
+        Task<IEnumerable<DailyMenuDto>> GetAllMenusAsync();
         Task UpdateMealQuantityAsync(Guid menuMealId, int newQuantity);
+        Task<MenuMealDto?> GetMenuMealAsync(Guid menuMealId);
     }
 }

@@ -1,5 +1,6 @@
 ﻿@page
 @model IndexModel
+@using MealPrepService.BusinessLogicLayer.Interfaces
 @{
     ViewData["Title"] = "Home";
 }
@@ -42,3 +43,115 @@
         </div>
     </div>
 </div>
+
+@if (ViewContext.HttpContext.Session.GetString("AccountId") != null)
+{
+    <div class="mt-5">
+        <div class="page-header">
+            <h3><i class="bi bi-stars me-2" style="color: var(--clr-success);"></i>Quick AI Meal Suggestion</h3>
+            <p class="mb-0">Get a personalized meal idea right now</p>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-4">
+                <div class="card-modern p-4">
+                    <form method="post" asp-page-handler="GenerateMeal" data-ai-loading="Generating meal ideas">
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Meal Type</label>
+                            <select asp-for="MealType" class="form-select form-control-modern">
+                                <option value="Breakfast">🌅 Breakfast</option>
+                                <option value="Lunch" selected>☀️ Lunch</option>
+                                <option value="Dinner">🌙 Dinner</option>
+                                <option value="Snack">🍿 Snack</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold"><i class="bi bi-chat-dots me-1"></i>What are you in the mood for?</label>
+                            <textarea asp-for="MealPreference" class="form-control form-control-modern" rows="2"
+                                      placeholder="e.g. Something light and healthy, a protein-rich bowl..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary-custom w-100" style="background: var(--clr-success);">
+                            <i class="bi bi-stars me-1"></i> Suggest a Meal
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="col-lg-8">
+                @if (!Model.HasGenerated)
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-stars display-1 text-muted"></i>
+                        <h5 class="mt-3">AI Meal Ideas</h5>
+                        <p>Tell AI what you feel like eating and get instant suggestions.</p>
+                    </div>
+                }
+                else if (Model.SuggestionResult != null && Model.SuggestionResult.Suggestions.Any())
+                {
+                    @if (!string.IsNullOrEmpty(Model.SuggestionResult.Reasoning))
+                    {
+                        <div class="card-modern p-3 mb-3">
+                            <small class="fw-semibold"><i class="bi bi-robot me-1" style="color: var(--clr-primary);"></i>AI Reasoning:</small>
+                            <p class="text-muted small mb-0 mt-1">@Model.SuggestionResult.Reasoning</p>
+                        </div>
+                    }
+
+                    <div class="d-flex flex-column gap-3">
+                        @foreach (var suggestion in Model.SuggestionResult.Suggestions)
+                        {
+                            <div class="card-modern">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h5 class="fw-bold mb-0">@suggestion.MealName</h5>
+                                        <div class="d-flex gap-1">
+                                            <span class="badge badge-soft-primary">@Math.Round(suggestion.EstimatedCalories, 0) kcal</span>
+                                            @if (suggestion.PrepTime > 0)
+                                            {
+                                                <span class="badge badge-soft-muted"><i class="bi bi-clock me-1"></i>@suggestion.PrepTime min</span>
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="text-muted small mb-3">@suggestion.Description</p>
+                                    <div class="d-flex gap-2 flex-wrap mb-2">
+                                        <span class="badge badge-soft-success">P: @Math.Round(suggestion.ProteinG, 1)g</span>
+                                        <span class="badge badge-soft-warning">C: @Math.Round(suggestion.CarbsG, 1)g</span>
+                                        <span class="badge badge-soft-danger">F: @Math.Round(suggestion.FatG, 1)g</span>
+                                    </div>
+                                    @if (!string.IsNullOrEmpty(suggestion.Reasoning))
+                                    {
+                                        <div class="mt-2 pt-2" style="border-top: 1px solid var(--clr-border);">
+                                            <small class="text-muted fst-italic"><i class="bi bi-chat-left-text me-1"></i>@suggestion.Reasoning</small>
+                                        </div>
+                                    }
+                                </div>
+                                @if (suggestion.RecipeId.HasValue)
+                                {
+                                    <div class="card-footer d-flex gap-2">
+                                        <a asp-page="/Recipes/Details" asp-route-id="@suggestion.RecipeId" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-eye me-1"></i>View Recipe
+                                        </a>
+                                        <a asp-page="/MealPlans/AddMeal" asp-route-recipeId="@suggestion.RecipeId" asp-route-returnUrl="/Index" class="btn btn-outline-success btn-sm">
+                                            <i class="bi bi-plus-lg me-1"></i>Add to Meal Plan
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else if (Model.HasGenerated)
+                {
+                    <div class="empty-state">
+                        <i class="bi bi-emoji-frown display-1 text-muted"></i>
+                        <h5 class="mt-3">No Suggestions</h5>
+                        <p>AI couldn't generate suggestions. Try a different description or check your profile.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}
