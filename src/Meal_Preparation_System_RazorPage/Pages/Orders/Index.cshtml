@@ -1,0 +1,76 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.Orders.IndexModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "My Orders";
+}
+
+<div class="page-header">
+    <h2><i class="bi bi-bag me-2" style="color: var(--clr-primary);"></i>My Orders</h2>
+    <p class="mb-0">Track all your meal orders</p>
+</div>
+
+@if (!Model.Orders.Any())
+{
+    <div class="empty-state">
+        <i class="bi bi-bag display-1 text-muted"></i>
+        <h5 class="mt-3">No Orders Yet</h5>
+        <p>Check out today's <a asp-page="/Menu/Index" class="text-decoration-none fw-semibold">menu</a> to place your first order!</p>
+    </div>
+}
+else
+{
+    <div class="card-modern">
+        <div class="table-responsive">
+            <table class="table table-modern mb-0">
+                <thead>
+                    <tr>
+                        <th>Order Date</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.Orders.OrderByDescending(o => o.OrderDate))
+                    {
+                        <tr>
+                            <td>
+                                <div class="fw-semibold">@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                                <div class="text-muted small">@order.OrderDate.ToString("HH:mm")</div>
+                            </td>
+                            <td><span class="badge badge-soft-muted">@order.OrderDetails.Count item(s)</span></td>
+                            <td class="fw-bold" style="color: var(--clr-primary);">@order.TotalAmount.ToString("N0") ₫</td>
+                            <td>
+                                @if (order.PaymentMethod != null)
+                                {
+                                    <span><i class="bi bi-credit-card me-1"></i>@order.PaymentMethod</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @(order.Status switch
+                                {
+                                    "Completed" => "badge-soft-success",
+                                    "Pending" => "badge-soft-warning",
+                                    "Cancelled" => "badge-soft-danger",
+                                    _ => "badge-soft-muted"
+                                })">@order.Status</span>
+                            </td>
+                            <td>
+                                <a asp-page="/Orders/Details" asp-route-id="@order.Id" class="btn btn-outline-primary btn-sm">
+                                    <i class="bi bi-eye me-1"></i>Details
+                                </a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
