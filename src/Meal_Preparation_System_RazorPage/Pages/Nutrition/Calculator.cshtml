@@ -5,33 +5,35 @@
 }
 
 <style>
-    .page-header {
-        margin-top: 80px !important;
+    .nutrition-header {
+        background: linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%);
         padding: 40px 0;
-        border-radius: 12px;
-        background: linear-gradient(135deg, rgba(255,107,53,0.06), rgba(255,140,90,0.03));
+        margin: -24px -12px 30px -12px;
+        border-radius: 0 0 24px 24px;
     }
 
     .metric-card {
-        border-radius: 12px;
+        border-radius: 16px;
         min-height: 84px;
+        border: 1px solid #f0f0f0;
     }
 
     .metric-value {
         font-size: 1.25rem;
         font-weight: 700;
+        color: #ff6b35;
     }
 
     .metric-label {
         font-size: 0.85rem;
-        color: #666;
+        color: #888;
     }
 </style>
 
-<div class="page-header text-center mb-4">
+<div class="nutrition-header text-center mb-4">
     <div class="container">
-        <h1 class="page-title">Meal Nutrient Calculator</h1>
-        <p class="page-subtitle">
+        <h1 style="font-size: 2rem; font-weight: 700;"><i class="bi bi-calculator me-2" style="color: #ff6b35;"></i>Meal Nutrient Calculator</h1>
+        <p style="color: #888;">
             Enter your ingredients and portions — our AI will analyze nutrients and give friendly suggestions.
         </p>
 

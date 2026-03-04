@@ -5,57 +5,123 @@
     ViewData["Title"] = "Login";
 }
 
-<div class="row justify-content-center" style="margin-top: 4rem;">
+<style>
+    .login-card {
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 60px rgba(0,0,0,0.1);
+    }
+    .login-header {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        padding: 40px 32px;
+        text-align: center;
+        color: white;
+    }
+    .login-header i {
+        font-size: 48px;
+        margin-bottom: 12px;
+        display: block;
+    }
+    .login-header h3 {
+        font-weight: 700;
+        margin-bottom: 4px;
+    }
+    .login-header p {
+        opacity: 0.9;
+        font-size: 14px;
+        margin: 0;
+    }
+    .login-body {
+        padding: 32px;
+    }
+    .form-label-modern {
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+    .input-group-modern .input-group-text {
+        background: #fff5f0;
+        border: 2px solid #f0f0f0;
+        border-right: none;
+        color: #ff6b35;
+    }
+    .input-group-modern .form-control {
+        border: 2px solid #f0f0f0;
+        border-left: none;
+        padding: 12px 16px;
+    }
+    .input-group-modern .form-control:focus {
+        border-color: #ff6b35;
+        box-shadow: none;
+    }
+    .input-group-modern .form-control:focus + .input-group-text,
+    .input-group-modern:focus-within .input-group-text {
+        border-color: #ff6b35;
+    }
+    .btn-login {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        border: none;
+        padding: 14px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    .btn-login:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        color: white;
+    }
+    .register-link {
+        color: #ff6b35;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .register-link:hover {
+        color: #ff5722;
+        text-decoration: underline;
+    }
+</style>
+
+<div class="row justify-content-center" style="margin-top: 4rem; margin-bottom: 4rem;">
     <div class="col-md-5 col-lg-4">
-        <div class="auth-card">
-            <div class="text-center mb-4">
-                <i class="bi bi-person-circle display-4" style="color: var(--clr-primary);"></i>
-                <h3 class="mt-2">Welcome Back</h3>
-                <p class="text-muted small">Sign in to your account</p>
+        <div class="login-card">
+            <div class="login-header">
+                <i class="bi bi-person-circle"></i>
+                <h3>Welcome Back</h3>
+                <p>Sign in to your Meal AI account</p>
             </div>
+            <div class="login-body">
+                <form method="post">
+                    @Html.AntiForgeryToken()
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>@TempData["ErrorMessage"]</div>
-                </div>
-            }
-            @if (TempData["SuccessMessage"] != null)
-            {
-                <div class="alert alert-success d-flex align-items-center" role="alert">
-                    <i class="bi bi-check-circle-fill me-2"></i>
-                    <div>@TempData["SuccessMessage"]</div>
-                </div>
-            }
-
-            <form method="post">
-                @Html.AntiForgeryToken()
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Email</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-envelope"></i></span>
-                        <input asp-for="Email" class="form-control" type="email" placeholder="you@example.com" required />
+                    <div class="mb-3">
+                        <label class="form-label-modern">Email</label>
+                        <div class="input-group input-group-modern">
+                            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="Email" class="form-control" type="email" placeholder="you@example.com" required />
+                        </div>
                     </div>
-                </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-semibold">Password</label>
-                    <div class="input-group">
-                        <span class="input-group-text"><i class="bi bi-lock"></i></span>
-                        <input asp-for="Password" class="form-control" type="password" placeholder="••••••••" required />
+                    <div class="mb-4">
+                        <label class="form-label-modern">Password</label>
+                        <div class="input-group input-group-modern">
+                            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+                            <input asp-for="Password" class="form-control" type="password" placeholder="••••••••" required />
+                        </div>
                     </div>
+
+                    <button type="submit" class="btn btn-login w-100">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+                </form>
+
+                <div class="text-center mt-4">
+                    <span class="text-muted">Don't have an account?</span>
+                    <a asp-page="/Account/Register" class="register-link">Register here</a>
                 </div>
-
-                <button type="submit" class="btn btn-primary-custom w-100">
-                    <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
-                </button>
-            </form>
-
-            <div class="text-center mt-4">
-                <span class="text-muted">Don't have an account?</span>
-                <a asp-page="/Account/Register" class="text-decoration-none fw-semibold">Register here</a>
             </div>
         </div>
     </div>

@@ -207,8 +207,33 @@ namespace MealPrepService.BusinessLogicLayer.Services
                         content.TryGetProperty("parts", out var parts) &&
                         parts.GetArrayLength() > 0)
                     {
-                        var text = parts[0].GetProperty("text").GetString();
-                        return text ?? string.Empty;
+                        // For thinking models (e.g. gemini-2.5-flash), the response may contain
+                        // a "thought" part followed by the actual content part.
+                        // Iterate from the last part to find the actual (non-thought) content.
+                        string? resultText = null;
+                        for (int i = parts.GetArrayLength() - 1; i >= 0; i--)
+                        {
+                            var part = parts[i];
+                            // Skip thought parts (thinking model internal reasoning)
+                            if (part.TryGetProperty("thought", out var thought) && thought.GetBoolean())
+                                continue;
+                            
+                            if (part.TryGetProperty("text", out var textElement))
+                            {
+                                resultText = textElement.GetString();
+                                break;
+                            }
+                        }
+                        
+                        // Fallback: if all parts are thoughts, use the last part's text
+                        if (resultText == null)
+                        {
+                            var lastPart = parts[parts.GetArrayLength() - 1];
+                            if (lastPart.TryGetProperty("text", out var fallbackText))
+                                resultText = fallbackText.GetString();
+                        }
+                        
+                        return resultText ?? string.Empty;
                     }
                 }
 

@@ -1,0 +1,448 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.MealSuggestion.IndexModel
+@{
+    ViewData["Title"] = "Meal Suggestions";
+}
+
+<style>
+    .suggestion-page {
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(135deg, #fff5f2 0%, #ffffff 50%, #f0f9ff 100%);
+        padding: 40px 0;
+        margin: -1.5rem -12px 0;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 32px;
+    }
+
+    .page-header-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+    }
+
+    .page-header-icon i {
+        font-size: 36px;
+        color: white;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 8px;
+    }
+
+    .page-header p {
+        color: #666;
+        font-size: 1.1rem;
+    }
+
+    .suggestion-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        padding: 32px;
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .form-section {
+        background: #f8f9fa;
+        border-radius: 16px;
+        padding: 20px;
+        margin-bottom: 20px;
+        border: 2px solid transparent;
+        transition: all 0.3s ease;
+    }
+
+    .form-section:hover {
+        border-color: rgba(255, 107, 53, 0.2);
+        background: #fff;
+    }
+
+    .form-section-label {
+        font-weight: 600;
+        color: #1a1a2e;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .form-section-label i {
+        color: #ff6b35;
+        font-size: 20px;
+    }
+
+    .btn-option {
+        flex: 1;
+        padding: 14px 20px;
+        border: 2px solid #e0e0e0;
+        background: white;
+        border-radius: 12px;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-align: center;
+    }
+
+    .btn-option:hover {
+        border-color: #ff6b35;
+        background: #fff5f2;
+    }
+
+    .btn-check:checked + .btn-option {
+        border-color: #ff6b35;
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        color: white;
+    }
+
+    .form-control-custom {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control-custom:focus {
+        border-color: #ff6b35;
+        box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+    }
+
+    .form-select-custom {
+        border: 2px solid #e0e0e0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        font-size: 15px;
+        transition: all 0.3s ease;
+        background-color: white;
+    }
+
+    .form-select-custom:focus {
+        border-color: #ff6b35;
+        box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+    }
+
+    .input-group-custom {
+        display: flex;
+        gap: 0;
+    }
+
+    .input-group-custom .form-control-custom {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+    }
+
+    .input-group-custom .input-suffix {
+        background: #f0f0f0;
+        border: 2px solid #e0e0e0;
+        border-left: none;
+        border-radius: 0 12px 12px 0;
+        padding: 14px 16px;
+        font-weight: 500;
+        color: #666;
+        display: flex;
+        align-items: center;
+    }
+
+    .healthy-toggle {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .healthy-info h6 {
+        font-weight: 600;
+        margin-bottom: 4px;
+        color: #1a1a2e;
+    }
+
+    .healthy-info p {
+        color: #888;
+        font-size: 13px;
+        margin: 0;
+    }
+
+    .form-switch .form-check-input {
+        width: 56px;
+        height: 28px;
+        cursor: pointer;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #4caf50;
+        border-color: #4caf50;
+    }
+
+    .btn-submit {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        border: none;
+        padding: 18px 32px;
+        border-radius: 14px;
+        font-weight: 600;
+        font-size: 18px;
+        color: white;
+        width: 100%;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .btn-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(255, 107, 53, 0.4);
+        color: white;
+    }
+
+    .btn-submit:disabled {
+        opacity: 0.7;
+        transform: none;
+    }
+
+    .btn-submit i {
+        font-size: 22px;
+    }
+
+    .suggestion-hint {
+        text-align: center;
+        margin-top: 16px;
+        padding: 12px;
+        background: rgba(255, 107, 53, 0.1);
+        border-radius: 10px;
+        color: #ff6b35;
+        font-size: 14px;
+    }
+
+    .option-buttons {
+        display: flex;
+        gap: 12px;
+    }
+
+    .loading-overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(255,255,255,0.9);
+        z-index: 9999;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+    }
+
+    .loading-overlay.active {
+        display: flex;
+    }
+
+    .loading-spinner {
+        width: 60px;
+        height: 60px;
+        border: 4px solid #f0f0f0;
+        border-top: 4px solid #ff6b35;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+
+    @@keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+        margin-top: 20px;
+        color: #666;
+        font-size: 16px;
+        font-weight: 500;
+    }
+</style>
+
+<div class="suggestion-page">
+    <div class="container">
+        <div class="page-header">
+            <div class="page-header-icon">
+                <i class="bi bi-stars"></i>
+            </div>
+            <h1>What would you like to eat?</h1>
+            <p>Fill in the information below to get AI meal suggestions</p>
+        </div>
+
+        <div class="suggestion-card">
+            <form method="post" id="suggestionForm">
+                <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                }
+
+                <!-- Cook or Order? -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-patch-question-fill"></i>
+                        <span>Do you want to cook or order?</span>
+                    </div>
+                    <div class="option-buttons">
+                        <input type="radio" class="btn-check" name="PreparationMethod" id="radio-cook" value="Cooking"
+                               @(Model.PreparationMethod == "Cooking" ? "checked" : "") />
+                        <label class="btn-option" for="radio-cook">
+                            <i class="bi bi-egg-fried me-2"></i>Cooking
+                        </label>
+
+                        <input type="radio" class="btn-check" name="PreparationMethod" id="radio-order" value="Order"
+                               @(Model.PreparationMethod == "Order" ? "checked" : "") />
+                        <label class="btn-option" for="radio-order">
+                            <i class="bi bi-bag me-2"></i>Order
+                        </label>
+                    </div>
+                    <span asp-validation-for="PreparationMethod" class="text-danger small"></span>
+                </div>
+
+                <!-- Meal Type -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-cup-hot-fill"></i>
+                        <span>Meal Type</span>
+                    </div>
+                    <select asp-for="MealType" class="form-select-custom w-100">
+                        @foreach (var mealType in IndexModel.MealTypeOptions)
+                        {
+                            <option value="@mealType">@mealType</option>
+                        }
+                    </select>
+                    <span asp-validation-for="MealType" class="text-danger small"></span>
+                </div>
+
+                <!-- Serve Date -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-calendar-event-fill"></i>
+                        <span>Serve Date</span>
+                    </div>
+                    <input asp-for="ServeDate" type="date" class="form-control-custom w-100"
+                           min="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                    <span asp-validation-for="ServeDate" class="text-danger small"></span>
+                </div>
+
+                <!-- Current Mood -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-emoji-smile-fill"></i>
+                        <span>Current Mood</span>
+                    </div>
+                    <select asp-for="CurrentMood" class="form-select-custom w-100">
+                        <option value="">How are you feeling?</option>
+                        @foreach (var mood in IndexModel.MoodOptions)
+                        {
+                            <option value="@mood">@mood</option>
+                        }
+                    </select>
+                    <span asp-validation-for="CurrentMood" class="text-danger small"></span>
+                </div>
+
+                <!-- Budget -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-wallet2"></i>
+                        <span>Budget</span>
+                    </div>
+                    <div class="input-group-custom">
+                        <input asp-for="Budget" type="number" class="form-control-custom flex-grow-1"
+                               placeholder="How much do you want to spend?" />
+                        <span class="input-suffix">VND</span>
+                    </div>
+                    <span asp-validation-for="Budget" class="text-danger small"></span>
+                </div>
+
+                <!-- Available Cooking Time -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-clock-fill"></i>
+                        <span>Available Cooking Time</span>
+                    </div>
+                    <div class="input-group-custom">
+                        <input asp-for="AvailableTime" type="number" class="form-control-custom flex-grow-1"
+                               placeholder="How much time do you have?" />
+                        <span class="input-suffix">min</span>
+                    </div>
+                    <span asp-validation-for="AvailableTime" class="text-danger small"></span>
+                </div>
+
+                <!-- Specific Request -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-chat-square-text-fill"></i>
+                        <span>Specific Request (optional)</span>
+                    </div>
+                    <textarea asp-for="SpecificRequest" class="form-control-custom w-100" rows="2"
+                              placeholder="E.g.: Something spicy, soup, Korean food..."></textarea>
+                    <span asp-validation-for="SpecificRequest" class="text-danger small"></span>
+                </div>
+
+                <!-- Prioritize Healthy -->
+                <div class="form-section">
+                    <div class="healthy-toggle">
+                        <div class="healthy-info">
+                            <h6><i class="bi bi-heart-pulse-fill text-success me-2"></i>Prioritize Healthy Options</h6>
+                            <p>Low oil, more vegetables, good for health</p>
+                        </div>
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" role="switch"
+                                   asp-for="PrioritizeHealthy" id="healthySwitch" />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <i class="bi bi-stars"></i>
+                    <span>Suggest for Me</span>
+                </button>
+
+                <div class="suggestion-hint" id="suggestionHint">
+                    <i class="bi bi-info-circle me-1"></i>
+                    AI will suggest <strong>2 meals</strong> suitable for you
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Overlay -->
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Analyzing your preferences and generating personalized meal suggestions...</div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Update hint based on preparation method
+        document.querySelectorAll('input[name="PreparationMethod"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const hint = document.getElementById('suggestionHint');
+                if (this.value === 'Cooking') {
+                    hint.innerHTML = '<i class="bi bi-info-circle me-1"></i> AI will suggest <strong>2 meals</strong> suitable for you';
+                } else {
+                    hint.innerHTML = '<i class="bi bi-info-circle me-1"></i> AI will suggest <strong>1 meal</strong> suitable for you';
+                }
+            });
+        });
+
+        // Show loading on form submit
+        document.getElementById('suggestionForm').addEventListener('submit', function() {
+            document.getElementById('loadingOverlay').classList.add('active');
+            document.getElementById('submitBtn').disabled = true;
+        });
+    </script>
+}

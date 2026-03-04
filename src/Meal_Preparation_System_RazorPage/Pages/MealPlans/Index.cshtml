@@ -5,40 +5,70 @@
     ViewData["Title"] = "Meal Plans";
 }
 
-<div class="page-header">
-    <div class="d-flex justify-content-between align-items-center">
-        <div>
-            <h2><i class="bi bi-clipboard-check me-2" style="color: var(--clr-primary);"></i>My Meal Plans</h2>
-            <p class="mb-0">AI-powered meal plans tailored to your profile</p>
+<style>
+    .plans-header {
+        background: linear-gradient(135deg, #fff5f0 0%, #ffe8dc 100%);
+        padding: 40px 0;
+        margin: -24px -12px 30px -12px;
+        border-radius: 0 0 24px 24px;
+    }
+    .plan-card {
+        background: white;
+        border: 1px solid #f0f0f0;
+        border-radius: 16px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+    }
+    .plan-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .plan-card.active-plan {
+        border-left: 4px solid #ff6b35;
+    }
+    .plan-card .card-body { padding: 24px; }
+    .plan-card .card-footer {
+        background: #fafafa;
+        border-top: 1px solid #f0f0f0;
+        padding: 16px 24px;
+    }
+    .btn-generate {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        border: none;
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        color: white;
+        transition: all 0.3s ease;
+    }
+    .btn-generate:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        color: white;
+    }
+</style>
+
+<div class="plans-header">
+    <div class="container">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 style="font-size: 2rem; font-weight: 700;"><i class="bi bi-calendar-week me-2" style="color: #ff6b35;"></i>My Meal Plans</h1>
+                <p style="color: #888;">AI-powered meal plans tailored to your profile</p>
+            </div>
+            <a asp-page="/MealPlans/Generate" class="btn-generate">
+                <i class="bi bi-stars me-1"></i> Generate AI Plan
+            </a>
         </div>
-        <a asp-page="/MealPlans/Generate" class="btn btn-primary-custom">
-            <i class="bi bi-stars me-1"></i> Generate AI Plan
-        </a>
     </div>
 </div>
-
-@if (TempData["ErrorMessage"] != null)
-{
-    <div class="alert alert-danger d-flex align-items-center" role="alert">
-        <i class="bi bi-exclamation-triangle-fill me-2"></i>
-        <div>@TempData["ErrorMessage"]</div>
-    </div>
-}
-@if (TempData["SuccessMessage"] != null)
-{
-    <div class="alert alert-success d-flex align-items-center" role="alert">
-        <i class="bi bi-check-circle-fill me-2"></i>
-        <div>@TempData["SuccessMessage"]</div>
-    </div>
-}
 
 @if (!Model.MealPlans.Any())
 {
     <div class="empty-state">
-        <i class="bi bi-clipboard display-1 text-muted"></i>
+        <i class="bi bi-clipboard display-1" style="color: #ccc;"></i>
         <h5 class="mt-3">No Meal Plans Yet</h5>
         <p>Let AI create a personalized meal plan for you.</p>
-        <a asp-page="/MealPlans/Generate" class="btn btn-primary-custom mt-2">
+        <a asp-page="/MealPlans/Generate" class="btn-generate mt-2">
             <i class="bi bi-stars me-1"></i> Generate Your First Plan
         </a>
     </div>
@@ -49,7 +79,7 @@ else
         @foreach (var plan in Model.MealPlans)
         {
             <div class="col-md-6">
-                <div class="card-modern h-100 @(plan.IsActive ? "border-start border-primary border-3" : "")">
+                <div class="plan-card h-100 @(plan.IsActive ? "active-plan" : "")">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-start mb-2">
                             <h5 class="fw-bold mb-0">@plan.PlanName</h5>
@@ -73,7 +103,7 @@ else
                         </p>
                     </div>
                     <div class="card-footer d-flex gap-2">
-                        <a asp-page="/MealPlans/Details" asp-route-id="@plan.Id" class="btn btn-outline-primary btn-sm">
+                        <a asp-page="/MealPlans/Details" asp-route-id="@plan.Id" class="btn btn-sm" style="background: #fff5f0; color: #ff6b35; border: 1px solid #ff6b35;">
                             <i class="bi bi-eye me-1"></i>View
                         </a>
                         @if (!plan.IsActive)

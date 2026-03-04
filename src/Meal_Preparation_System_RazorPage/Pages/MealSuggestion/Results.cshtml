@@ -1,0 +1,474 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.MealSuggestion.ResultsModel
+@{
+    ViewData["Title"] = "Meal Suggestions";
+}
+
+<style>
+    .results-page {
+        min-height: calc(100vh - 200px);
+        background: linear-gradient(135deg, #fff5f2 0%, #ffffff 50%, #f0f9ff 100%);
+        padding: 40px 0;
+        margin: -1.5rem -12px 0;
+    }
+
+    .page-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .page-header-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, #ffd700, #ffaa00);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 30px rgba(255, 170, 0, 0.3);
+    }
+
+    .page-header-icon i {
+        font-size: 40px;
+        color: white;
+    }
+
+    .page-header h1 {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 8px;
+    }
+
+    .overall-reasoning {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        border-radius: 16px;
+        padding: 20px 24px;
+        max-width: 700px;
+        margin: 0 auto;
+        display: flex;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .overall-reasoning i {
+        color: #1976d2;
+        font-size: 24px;
+        flex-shrink: 0;
+    }
+
+    .overall-reasoning p {
+        margin: 0;
+        color: #333;
+        font-size: 15px;
+        line-height: 1.6;
+    }
+
+    .suggestion-card {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+        overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        transition: all 0.3s ease;
+    }
+
+    .suggestion-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 50px rgba(0,0,0,0.12);
+    }
+
+    .card-badge {
+        position: absolute;
+        top: 16px;
+        right: 16px;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+    }
+
+    .card-badge.database {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+    }
+
+    .card-badge.ai {
+        background: linear-gradient(135deg, #4caf50, #66bb6a);
+        color: white;
+    }
+
+    .card-header-custom {
+        position: relative;
+        padding: 24px 24px 16px;
+        background: linear-gradient(135deg, #f8f9fa, #fff);
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .meal-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin: 0 0 8px;
+        padding-right: 100px;
+    }
+
+    .meal-description {
+        color: #666;
+        font-size: 14px;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    .card-body-custom {
+        padding: 20px 24px;
+        flex: 1;
+    }
+
+    .nutrition-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 16px;
+    }
+
+    .nutrition-badge {
+        padding: 8px 14px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .nutrition-badge.calories {
+        background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+        color: #e65100;
+    }
+
+    .nutrition-badge.time {
+        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+        color: #1565c0;
+    }
+
+    .nutrition-badge.price {
+        background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+        color: #2e7d32;
+    }
+
+    .macro-row {
+        display: flex;
+        gap: 16px;
+        padding: 12px 16px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        margin-bottom: 16px;
+    }
+
+    .macro-item {
+        text-align: center;
+        flex: 1;
+    }
+
+    .macro-value {
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a2e;
+    }
+
+    .macro-label {
+        font-size: 11px;
+        color: #888;
+        text-transform: uppercase;
+    }
+
+    .reasoning-box {
+        background: linear-gradient(135deg, #f5f5f5, #fafafa);
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 16px;
+        border-left: 4px solid #ff6b35;
+    }
+
+    .reasoning-box small {
+        color: #555;
+        line-height: 1.5;
+    }
+
+    .reasoning-box strong {
+        color: #ff6b35;
+    }
+
+    .ingredients-accordion {
+        border: 2px solid #f0f0f0;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 16px;
+    }
+
+    .ingredients-accordion summary {
+        padding: 12px 16px;
+        background: #f8f9fa;
+        cursor: pointer;
+        font-weight: 500;
+        color: #ff6b35;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .ingredients-accordion summary:hover {
+        background: #f0f0f0;
+    }
+
+    .ingredients-list {
+        padding: 12px 16px;
+        margin: 0;
+        list-style: none;
+    }
+
+    .ingredients-list li {
+        padding: 6px 0;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+        color: #555;
+    }
+
+    .ingredients-list li:last-child {
+        border-bottom: none;
+    }
+
+    .card-footer-custom {
+        padding: 16px 24px;
+        background: #f8f9fa;
+    }
+
+    .btn-add-plan {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        border: none;
+        padding: 14px 24px;
+        border-radius: 12px;
+        font-weight: 600;
+        color: white;
+        width: 100%;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .btn-add-plan:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 107, 53, 0.35);
+        color: white;
+    }
+
+    .btn-back {
+        background: white;
+        border: 2px solid #e0e0e0;
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 500;
+        color: #666;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .btn-back:hover {
+        border-color: #ff6b35;
+        color: #ff6b35;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 40px;
+        background: white;
+        border-radius: 24px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+
+    .empty-state i {
+        font-size: 64px;
+        color: #f5a623;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 12px;
+    }
+
+    .empty-state p {
+        color: #666;
+        margin-bottom: 24px;
+    }
+</style>
+
+<div class="results-page">
+    <div class="container">
+        <div class="page-header">
+            <div class="page-header-icon">
+                <i class="bi bi-stars"></i>
+            </div>
+            <h1>Meal Suggestions for You</h1>
+            @if (!string.IsNullOrEmpty(Model.OverallReasoning))
+            {
+                <div class="overall-reasoning mt-4">
+                    <i class="bi bi-lightbulb-fill"></i>
+                    <p>@Model.OverallReasoning</p>
+                </div>
+            }
+        </div>
+
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success text-center">@TempData["SuccessMessage"]</div>
+        }
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger text-center">@TempData["ErrorMessage"]</div>
+        }
+
+        @if (Model.Suggestions?.Any() == true)
+        {
+            <div class="row g-4">
+                @foreach (var suggestion in Model.Suggestions)
+                {
+                    <div class="col-md-6">
+                        <div class="suggestion-card">
+                            <div class="card-header-custom">
+                                @if (suggestion.IsFromDatabase)
+                                {
+                                    <span class="card-badge database">
+                                        <i class="bi bi-database-fill me-1"></i>From Database
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="card-badge ai">
+                                        <i class="bi bi-robot me-1"></i>AI Generated
+                                    </span>
+                                }
+                                <h5 class="meal-name">@suggestion.RecipeName</h5>
+                                <p class="meal-description">@suggestion.Description</p>
+                            </div>
+
+                            <div class="card-body-custom">
+                                <div class="nutrition-badges">
+                                    <span class="nutrition-badge calories">
+                                        <i class="bi bi-fire"></i>@suggestion.EstimatedCalories.ToString("0") cal
+                                    </span>
+                                    <span class="nutrition-badge time">
+                                        <i class="bi bi-clock"></i>@suggestion.PrepTime min
+                                    </span>
+                                    <span class="nutrition-badge price">
+                                        <i class="bi bi-cash"></i>~@suggestion.EstimatedPrice.ToString("N0") VND
+                                    </span>
+                                </div>
+
+                                <div class="macro-row">
+                                    <div class="macro-item">
+                                        <div class="macro-value">@suggestion.ProteinG.ToString("F1")g</div>
+                                        <div class="macro-label">Protein</div>
+                                    </div>
+                                    <div class="macro-item">
+                                        <div class="macro-value">@suggestion.CarbsG.ToString("F1")g</div>
+                                        <div class="macro-label">Carbs</div>
+                                    </div>
+                                    <div class="macro-item">
+                                        <div class="macro-value">@suggestion.FatG.ToString("F1")g</div>
+                                        <div class="macro-label">Fat</div>
+                                    </div>
+                                </div>
+
+                                @if (!string.IsNullOrEmpty(suggestion.Reasoning))
+                                {
+                                    <div class="reasoning-box">
+                                        <small><strong>Reason:</strong> @suggestion.Reasoning</small>
+                                    </div>
+                                }
+
+                                @if (suggestion.Ingredients?.Any() == true)
+                                {
+                                    <details class="ingredients-accordion">
+                                        <summary>
+                                            <i class="bi bi-list-check"></i>
+                                            View Ingredients (@suggestion.Ingredients.Count)
+                                        </summary>
+                                        <ul class="ingredients-list">
+                                            @foreach (var ing in suggestion.Ingredients)
+                                            {
+                                                <li><i class="bi bi-dot"></i>@ing.Name - @ing.Quantity @ing.Unit</li>
+                                            }
+                                        </ul>
+                                    </details>
+                                }
+                            </div>
+
+                            <div class="card-footer-custom">
+                                <form method="post" asp-page-handler="AddToMealPlan">
+                                    <input type="hidden" name="mealName" value="@suggestion.RecipeName" />
+                                    <input type="hidden" name="mealType" value="@Model.MealType" />
+                                    <input type="hidden" name="serveDate" value="@Model.ServeDate.ToString("yyyy-MM-dd")" />
+                                    <input type="hidden" name="recipeId" value="@(suggestion.RecipeId?.ToString() ?? "")" />
+                                    <input type="hidden" name="calories" value="@suggestion.EstimatedCalories" />
+                                    <input type="hidden" name="proteinG" value="@suggestion.ProteinG" />
+                                    <input type="hidden" name="carbsG" value="@suggestion.CarbsG" />
+                                    <input type="hidden" name="fatG" value="@suggestion.FatG" />
+                                    <input type="hidden" name="instructions" value="@suggestion.Instructions" />
+                                    @{
+                                        var ingredientsJson = "[]";
+                                        if (suggestion.Ingredients?.Any() == true)
+                                        {
+                                            var ingredientsList = suggestion.Ingredients.Select(i => new { name = i.Name, quantity = i.Quantity, unit = i.Unit });
+                                            ingredientsJson = System.Text.Json.JsonSerializer.Serialize(ingredientsList);
+                                        }
+                                    }
+                                    <input type="hidden" name="ingredientsJson" value="@ingredientsJson" />
+
+                                    <button type="submit" class="btn-add-plan">
+                                        <i class="bi bi-plus-circle-fill"></i>
+                                        Add to Meal Plan (@Model.ServeDate.ToString("MMM dd"))
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="text-center mt-5">
+                <a asp-page="Index" class="btn-back">
+                    <i class="bi bi-arrow-left"></i>
+                    Find Other Suggestions
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <i class="bi bi-exclamation-triangle"></i>
+                <h3>No Suitable Suggestions Found</h3>
+                <p>Please try again with different information for better suggestions.</p>
+                <a asp-page="Index" class="btn-add-plan" style="display: inline-flex; width: auto;">
+                    <i class="bi bi-arrow-left"></i>
+                    Go Back
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

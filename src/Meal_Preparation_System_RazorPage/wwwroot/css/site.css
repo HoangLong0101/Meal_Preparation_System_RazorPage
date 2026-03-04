@@ -2,16 +2,26 @@
    Global & Typography
    =========================== */
 :root {
-  --clr-primary: #2563eb;
-  --clr-primary-dark: #1d4ed8;
+  --primary-color: #ff6b35;
+  --primary-hover: #ff5722;
+  --primary-light: #fff5f0;
+  --bs-primary: #ff6b35;
+  --bs-primary-rgb: 255, 107, 53;
+  --bs-link-color: #ff6b35;
+  --bs-link-hover-color: #ff5722;
+  --bs-btn-bg: #ff6b35;
+  --bs-btn-border-color: #ff6b35;
+  --bs-btn-hover-bg: #ff5722;
+  --bs-btn-hover-border-color: #ff5722;
+  --bs-focus-ring-color: rgba(255, 107, 53, 0.25);
   --clr-success: #16a34a;
   --clr-warning: #f59e0b;
   --clr-danger: #dc2626;
-  --clr-bg: #f8fafc;
+  --clr-bg: #fafafa;
   --clr-surface: #ffffff;
-  --clr-text: #1e293b;
-  --clr-muted: #64748b;
-  --clr-border: #e2e8f0;
+  --clr-text: #1a1a1a;
+  --clr-muted: #888;
+  --clr-border: #f0f0f0;
   --radius: 0.75rem;
   --shadow-sm: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
   --shadow: 0 4px 6px rgba(0,0,0,.05), 0 2px 4px rgba(0,0,0,.04);
@@ -30,14 +40,14 @@ html {
 }
 
 body {
-  margin-bottom: 60px;
+  margin-bottom: 0;
   background: var(--clr-bg);
   color: var(--clr-text);
   font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
 }
 
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--clr-primary);
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--primary-color);
 }
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
@@ -49,34 +59,20 @@ body {
 }
 
 /* ===========================
-   Navbar
+   Bootstrap Primary Override
    =========================== */
-.navbar-custom {
-  background: var(--clr-surface) !important;
-  border-bottom: 1px solid var(--clr-border);
-  box-shadow: var(--shadow-sm);
+.btn-primary,
+.bg-primary {
+  background-color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
 }
-.navbar-custom .navbar-brand {
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--clr-primary) !important;
-  letter-spacing: -0.025em;
+.btn-primary:hover,
+.bg-primary:hover {
+  background-color: var(--primary-hover) !important;
+  border-color: var(--primary-hover) !important;
 }
-.navbar-custom .nav-link {
-  color: var(--clr-muted) !important;
-  font-weight: 500;
-  padding: 0.5rem 1rem !important;
-  border-radius: 0.5rem;
-  transition: var(--transition);
-}
-.navbar-custom .nav-link:hover,
-.navbar-custom .nav-link.active {
-  color: var(--clr-primary) !important;
-  background: rgba(37, 99, 235, 0.06);
-}
-.navbar-user-greeting {
-  color: var(--clr-text) !important;
-  font-weight: 600;
+.text-primary {
+  color: var(--primary-color) !important;
 }
 
 /* ===========================
@@ -85,12 +81,12 @@ body {
 .card-modern {
   background: var(--clr-surface);
   border: 1px solid var(--clr-border);
-  border-radius: var(--radius);
+  border-radius: 16px;
   box-shadow: var(--shadow-sm);
   transition: box-shadow var(--transition), transform var(--transition);
 }
 .card-modern:hover {
-  box-shadow: var(--shadow);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
 }
 .card-modern .card-body { padding: 1.5rem; }
 .card-modern .card-footer {
@@ -100,40 +96,8 @@ body {
 }
 
 /* ===========================
-   Page Headers
-   =========================== */
-.page-header {
-  padding: 2rem 0 1.5rem;
-  margin-bottom: 1.5rem;
-}
-.page-header h2,
-.page-header h1 {
-  font-weight: 700;
-  letter-spacing: -0.025em;
-  color: var(--clr-text);
-}
-.page-header p {
-  color: var(--clr-muted);
-}
-
-/* ===========================
    Buttons
    =========================== */
-.btn-primary-custom {
-  background: var(--clr-primary);
-  color: #fff;
-  border: none;
-  border-radius: 0.5rem;
-  padding: 0.625rem 1.5rem;
-  font-weight: 600;
-  transition: var(--transition);
-}
-.btn-primary-custom:hover {
-  background: var(--clr-primary-dark);
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow);
-}
 .btn-back {
   color: var(--clr-muted);
   font-weight: 500;
@@ -145,7 +109,7 @@ body {
   padding: 0.375rem 0;
   margin-bottom: 1rem;
 }
-.btn-back:hover { color: var(--clr-primary); }
+.btn-back:hover { color: var(--primary-color); }
 
 /* ===========================
    Metric / Stat Cards
@@ -165,7 +129,7 @@ body {
 /* ===========================
    Badges
    =========================== */
-.badge-soft-primary { background: rgba(37,99,235,0.1); color: var(--clr-primary); font-weight: 600; }
+.badge-soft-primary { background: rgba(255,107,53,0.1); color: var(--primary-color); font-weight: 600; }
 .badge-soft-success { background: rgba(22,163,74,0.1); color: var(--clr-success); font-weight: 600; }
 .badge-soft-warning { background: rgba(245,158,11,0.1); color: #b45309; font-weight: 600; }
 .badge-soft-danger  { background: rgba(220,38,38,0.1); color: var(--clr-danger); font-weight: 600; }
@@ -190,21 +154,7 @@ body {
   border-bottom: 1px solid var(--clr-border);
   vertical-align: middle;
 }
-.table-modern tbody tr:hover { background: rgba(37,99,235,0.02); }
-
-/* ===========================
-   Forms
-   =========================== */
-.form-control-modern {
-  border: 1px solid var(--clr-border);
-  border-radius: 0.5rem;
-  padding: 0.625rem 0.875rem;
-  transition: var(--transition);
-}
-.form-control-modern:focus {
-  border-color: var(--clr-primary);
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
-}
+.table-modern tbody tr:hover { background: rgba(255,107,53,0.02); }
 
 /* ===========================
    Auth Cards (Login / Register)
@@ -249,17 +199,6 @@ body {
 }
 
 /* ===========================
-   Footer
-   =========================== */
-.footer-modern {
-  background: var(--clr-surface);
-  border-top: 1px solid var(--clr-border);
-  padding: 1.25rem 0;
-  color: var(--clr-muted);
-  font-size: 0.875rem;
-}
-
-/* ===========================
    Expiry Indicators
    =========================== */
 .expiry-warning {
@@ -268,3 +207,21 @@ body {
 .expiry-danger {
   border-left: 4px solid var(--clr-danger) !important;
 }
+
+/* ===========================
+   Dropdown Fix
+   =========================== */
+.dropdown-menu {
+  position: absolute !important;
+  top: 100% !important;
+  left: 0 !important;
+  z-index: 1000 !important;
+  display: none;
+  min-width: 10rem;
+  margin: 0;
+  transform: translate(0, 0) !important;
+}
+.dropdown-menu.show { display: block !important; }
+.navbar .dropdown-menu { margin-top: 0.125rem; }
+.dropdown-menu-end { right: 0 !important; left: auto !important; }
+.dropdown, .nav-item.dropdown { position: relative !important; }

@@ -5,85 +5,100 @@
     ViewData["Title"] = "Create Recipe";
 }
 
+<style>
+    .recipe-form-card { border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: none; }
+    .recipe-form-header { background: linear-gradient(135deg, #ff6b35, #ff8c5a); padding: 24px 28px; color: white; }
+    .recipe-form-header h3 { font-weight: 700; margin: 0; }
+    .recipe-form-header p { margin: 4px 0 0; opacity: 0.9; font-size: 0.9rem; }
+    .recipe-form-body { padding: 28px; background: white; }
+    .ai-card { border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.08); border: none; }
+    .ai-card-header { background: linear-gradient(135deg, #28a745, #5cb85c); padding: 24px 28px; color: white; }
+    .ai-card-header h5 { font-weight: 700; margin: 0; }
+    .ai-card-header p { margin: 4px 0 0; opacity: 0.9; font-size: 0.85rem; }
+    .ai-card-body { padding: 28px; background: white; }
+    .btn-ai { background: linear-gradient(135deg, #28a745, #5cb85c); border: none; color: white; padding: 14px; border-radius: 12px; font-weight: 600; }
+    .btn-ai:hover { background: linear-gradient(135deg, #218838, #28a745); color: white; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(40,167,69,0.3); }
+    .btn-recipe { background: linear-gradient(135deg, #ff6b35, #ff8c5a); border: none; color: white; padding: 14px 24px; border-radius: 12px; font-weight: 600; }
+    .btn-recipe:hover { background: linear-gradient(135deg, #e55a2b, #ff6b35); color: white; transform: translateY(-1px); box-shadow: 0 4px 15px rgba(255,107,53,0.3); }
+</style>
+
 <a asp-page="/Recipes/Index" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Recipes</a>
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="card-modern p-4">
-            <h3 class="fw-bold mb-1"><i class="bi bi-plus-circle me-2" style="color: var(--clr-primary);"></i>Create Recipe</h3>
-            <p class="text-muted small mb-4">Add a new recipe with nutritional information</p>
+        <div class="recipe-form-card">
+            <div class="recipe-form-header">
+                <h3><i class="bi bi-plus-circle me-2"></i>Create Recipe</h3>
+                <p>Add a new recipe with nutritional information</p>
+            </div>
+            <div class="recipe-form-body">
+                <form method="post">
+                    @Html.AntiForgeryToken()
 
-            @if (TempData["ErrorMessage"] != null)
-            {
-                <div class="alert alert-danger d-flex align-items-center" role="alert">
-                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
-                    <div>@TempData["ErrorMessage"]</div>
-                </div>
-            }
-
-            <form method="post">
-                @Html.AntiForgeryToken()
-
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Recipe Name</label>
-                    <input asp-for="Input.RecipeName" class="form-control form-control-modern" placeholder="e.g. Grilled Chicken Salad" required />
-                </div>
-
-                <div class="row mb-3 g-3">
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Calories</label>
-                        <input asp-for="Input.TotalCalories" class="form-control form-control-modern" type="number" step="0.1" />
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Recipe Name</label>
+                        <input asp-for="Input.RecipeName" class="form-control form-control-modern" placeholder="e.g. Grilled Chicken Salad" required />
                     </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Protein (g)</label>
-                        <input asp-for="Input.ProteinG" class="form-control form-control-modern" type="number" step="0.1" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Carbs (g)</label>
-                        <input asp-for="Input.CarbsG" class="form-control form-control-modern" type="number" step="0.1" />
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label fw-semibold">Fat (g)</label>
-                        <input asp-for="Input.FatG" class="form-control form-control-modern" type="number" step="0.1" />
-                    </div>
-                </div>
 
-                <div class="mb-4">
-                    <label class="form-label fw-semibold">Instructions</label>
-                    <textarea asp-for="Input.Instructions" class="form-control form-control-modern" rows="5" placeholder="Step-by-step instructions..." required></textarea>
-                </div>
+                    <div class="row mb-3 g-3">
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Calories</label>
+                            <input asp-for="Input.TotalCalories" class="form-control form-control-modern" type="number" step="0.1" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Protein (g)</label>
+                            <input asp-for="Input.ProteinG" class="form-control form-control-modern" type="number" step="0.1" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Carbs (g)</label>
+                            <input asp-for="Input.CarbsG" class="form-control form-control-modern" type="number" step="0.1" />
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label fw-semibold">Fat (g)</label>
+                            <input asp-for="Input.FatG" class="form-control form-control-modern" type="number" step="0.1" />
+                        </div>
+                    </div>
 
-                <button type="submit" class="btn btn-primary-custom">
-                    <i class="bi bi-check-lg me-1"></i> Create Recipe
-                </button>
-            </form>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Instructions</label>
+                        <textarea asp-for="Input.Instructions" class="form-control form-control-modern" rows="5" placeholder="Step-by-step instructions..." required></textarea>
+                    </div>
+
+                    <button type="submit" class="btn btn-recipe">
+                        <i class="bi bi-check-lg me-1"></i> Create Recipe
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
     <div class="col-lg-5">
-        <div class="card-modern p-4">
-            <h5 class="fw-bold mb-1"><i class="bi bi-stars me-2" style="color: var(--clr-success);"></i>AI Recipe Generator</h5>
-            <p class="text-muted small mb-4">Let AI generate recipes based on your health profile and preferences.</p>
+        <div class="ai-card">
+            <div class="ai-card-header">
+                <h5><i class="bi bi-stars me-2"></i>AI Recipe Generator</h5>
+                <p>Let AI generate recipes based on your health profile and preferences.</p>
+            </div>
+            <div class="ai-card-body">
+                <form method="post" asp-page-handler="GenerateAI">
+                    @Html.AntiForgeryToken()
 
-            <form method="post" asp-page-handler="GenerateAI">
-                @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Cuisine Type</label>
+                        <select name="cuisineType" class="form-select form-control-modern">
+                            <option value="Vietnamese">🇻🇳 Vietnamese</option>
+                            <option value="Japanese">🇯🇵 Japanese</option>
+                            <option value="Korean">🇰🇷 Korean</option>
+                            <option value="Italian">🇮🇹 Italian</option>
+                            <option value="Mexican">🇲🇽 Mexican</option>
+                            <option value="Indian">🇮🇳 Indian</option>
+                        </select>
+                    </div>
 
-                <div class="mb-3">
-                    <label class="form-label fw-semibold">Cuisine Type</label>
-                    <select name="cuisineType" class="form-select form-control-modern">
-                        <option value="Vietnamese">🇻🇳 Vietnamese</option>
-                        <option value="Japanese">🇯🇵 Japanese</option>
-                        <option value="Korean">🇰🇷 Korean</option>
-                        <option value="Italian">🇮🇹 Italian</option>
-                        <option value="Mexican">🇲🇽 Mexican</option>
-                        <option value="Indian">🇮🇳 Indian</option>
-                    </select>
-                </div>
-
-                <button type="submit" class="btn btn-primary-custom w-100" style="background: var(--clr-success);">
-                    <i class="bi bi-stars me-1"></i> Generate 3 AI Recipes
-                </button>
-            </form>
+                    <button type="submit" class="btn btn-ai w-100">
+                        <i class="bi bi-stars me-1"></i> Generate 3 AI Recipes
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

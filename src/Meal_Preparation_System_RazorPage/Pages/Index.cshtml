@@ -1,44 +1,885 @@
 ﻿@page
 @model IndexModel
 @{
-    ViewData["Title"] = "Home";
+    ViewData["Title"] = "Meal AI - Smart Meal Suggestions";
 }
 
-<div class="page-header text-center">
-    <h1 class="display-5 fw-bold">Welcome to <span style="color: var(--clr-primary);">MealPrep</span></h1>
-    <p class="lead mt-2" style="color: var(--clr-muted);">Plan meals, track nutrition, and order fresh food — all in one place.</p>
-</div>
+<style>
+    /* Hero Section */
+    .hero-section {
+        background: linear-gradient(135deg, #fff5f0 0%, #ffe8dc 50%, #ffd4c4 100%);
+        padding: 80px 0 60px;
+        position: relative;
+        overflow: hidden;
+    }
 
-<div class="row g-4 mt-2">
-    <div class="col-md-4">
-        <div class="card-modern text-center p-4 h-100">
-            <div class="mb-3"><i class="bi bi-calendar3 display-4" style="color: var(--clr-primary);"></i></div>
-            <h5 class="fw-bold">Daily Menu</h5>
-            <p class="text-muted small">Browse today's curated meals and order with a single click.</p>
-            <a asp-page="/Menu/Index" class="btn btn-primary-custom btn-sm mt-auto">View Menu</a>
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        background: white;
+        padding: 8px 16px;
+        border-radius: 50px;
+        font-size: 14px;
+        color: #666;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .hero-badge i {
+        color: #ff6b35;
+        margin-right: 8px;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 20px;
+        line-height: 1.2;
+    }
+
+    .hero-title span {
+        color: #ff6b35;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: #666;
+        max-width: 500px;
+        margin: 0 auto 32px;
+        line-height: 1.6;
+    }
+
+    .btn-hero-primary {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        border: none;
+        padding: 14px 32px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        color: white;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-hero-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+        background: linear-gradient(135deg, #ff5722, #ff7043);
+        color: white;
+    }
+
+    .btn-hero-outline {
+        background: white;
+        border: 2px solid #e0e0e0;
+        padding: 12px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 16px;
+        color: #333;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-hero-outline:hover {
+        border-color: #ff6b35;
+        color: #ff6b35;
+        background: #fff5f0;
+    }
+
+    /* Demo Section */
+    .demo-section {
+        padding: 60px 0;
+        background: #fafafa;
+    }
+
+    .demo-link {
+        color: #ff6b35;
+        text-decoration: none;
+        font-size: 14px;
+        display: inline-flex;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .demo-link i {
+        margin-right: 6px;
+    }
+
+    .demo-card {
+        background: white;
+        border-radius: 20px;
+        padding: 24px;
+        box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .demo-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+    }
+
+    .demo-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+    }
+
+    .demo-dot.red { background: #ff5f57; }
+    .demo-dot.yellow { background: #ffbd2e; }
+    .demo-dot.green { background: #28c840; }
+
+    .demo-content {
+        display: flex;
+        gap: 24px;
+    }
+
+    .demo-form {
+        flex: 1;
+        padding: 16px;
+        background: #f8f9fa;
+        border-radius: 12px;
+    }
+
+    .demo-result {
+        flex: 1;
+        padding: 20px;
+        background: linear-gradient(135deg, #fff5f0, #ffe8dc);
+        border-radius: 12px;
+    }
+
+    .demo-input {
+        background: white;
+        border: none;
+        padding: 12px 16px;
+        border-radius: 8px;
+        margin-bottom: 12px;
+        width: 100%;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .demo-input i {
+        color: #ff6b35;
+    }
+
+    .demo-btn {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 8px;
+        width: 100%;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+    }
+
+    .meal-card-demo {
+        background: white;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .meal-title-demo {
+        color: #ff6b35;
+        font-weight: 700;
+        font-size: 18px;
+        margin-bottom: 4px;
+    }
+
+    .meal-tag {
+        background: #e8f5e9;
+        color: #43a047;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+
+    .meal-desc-demo {
+        color: #666;
+        font-size: 13px;
+        margin: 12px 0;
+        line-height: 1.5;
+    }
+
+    .meal-stats-demo {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        color: #888;
+    }
+
+    /* Stats Section */
+    .stats-section {
+        padding: 60px 0;
+        background: white;
+        border-top: 1px solid #f0f0f0;
+        border-bottom: 1px solid #f0f0f0;
+    }
+
+    .stat-item {
+        text-align: center;
+        padding: 20px;
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        background: #fff5f0;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 12px;
+        color: #ff6b35;
+        font-size: 20px;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #1a1a1a;
+    }
+
+    .stat-label {
+        font-size: 14px;
+        color: #888;
+    }
+
+    /* Why Section */
+    .why-section {
+        padding: 80px 0;
+        background: #fafafa;
+    }
+
+    .section-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 12px;
+    }
+
+    .section-subtitle {
+        color: #888;
+        font-size: 16px;
+        margin-bottom: 48px;
+    }
+
+    .feature-card {
+        background: white;
+        border-radius: 16px;
+        padding: 28px;
+        height: 100%;
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+
+    .feature-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+        font-size: 22px;
+    }
+
+    .feature-icon.pink { background: #fce4ec; color: #e91e63; }
+    .feature-icon.yellow { background: #fff8e1; color: #ff9800; }
+    .feature-icon.green { background: #e8f5e9; color: #4caf50; }
+    .feature-icon.purple { background: #f3e5f5; color: #9c27b0; }
+    .feature-icon.blue { background: #e3f2fd; color: #2196f3; }
+    .feature-icon.orange { background: #fff3e0; color: #ff6b35; }
+
+    .feature-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+
+    .feature-desc {
+        font-size: 14px;
+        color: #888;
+        line-height: 1.6;
+    }
+
+    /* How It Works Section */
+    .how-section {
+        padding: 80px 0;
+        background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+        color: white;
+    }
+
+    .how-section .section-title {
+        color: white;
+    }
+
+    .how-section .section-subtitle {
+        color: rgba(255,255,255,0.7);
+    }
+
+    .step-card {
+        text-align: center;
+        padding: 20px;
+        position: relative;
+    }
+
+    .step-icon {
+        width: 80px;
+        height: 80px;
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 32px;
+    }
+
+    .step-icon.orange { background: linear-gradient(135deg, #ff6b35, #ff8c5a); }
+    .step-icon.brown { background: linear-gradient(135deg, #8d6e63, #a1887f); }
+    .step-icon.yellow-step { background: linear-gradient(135deg, #ffb74d, #ffc107); }
+
+    .step-number {
+        position: absolute;
+        top: 0;
+        right: calc(50% - 60px);
+        width: 28px;
+        height: 28px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+        font-weight: 600;
+        color: #1a1a1a;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    }
+
+    .step-title {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .step-desc {
+        font-size: 14px;
+        color: rgba(255,255,255,0.7);
+        line-height: 1.6;
+    }
+
+    /* CTA Section */
+    .cta-section {
+        padding: 80px 0;
+        background: white;
+        text-align: center;
+    }
+
+    .cta-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1a1a1a;
+        margin-bottom: 16px;
+    }
+
+    .cta-subtitle {
+        color: #888;
+        font-size: 16px;
+        margin-bottom: 32px;
+        max-width: 500px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    /* Quick Actions for logged-in users */
+    .quick-actions {
+        padding: 60px 0;
+    }
+
+    .action-card {
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+        height: 100%;
+    }
+
+    .action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        border-color: #ff6b35;
+    }
+
+    .action-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 28px;
+    }
+
+    .action-icon.orange { background: linear-gradient(135deg, #ff6b35, #ff8c5a); color: white; }
+    .action-icon.green { background: linear-gradient(135deg, #43a047, #66bb6a); color: white; }
+    .action-icon.blue { background: linear-gradient(135deg, #1e88e5, #42a5f5); color: white; }
+    .action-icon.purple { background: linear-gradient(135deg, #8e24aa, #ab47bc); color: white; }
+
+    .action-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1a1a1a;
+        margin-bottom: 8px;
+    }
+
+    .action-desc {
+        font-size: 14px;
+        color: #888;
+        margin-bottom: 20px;
+    }
+
+    .btn-action {
+        background: linear-gradient(135deg, #ff6b35, #ff8c5a);
+        color: white;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+        color: white;
+    }
+
+    .btn-action-outline {
+        background: transparent;
+        color: #ff6b35;
+        border: 2px solid #ff6b35;
+        padding: 10px 22px;
+        border-radius: 10px;
+        font-weight: 600;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-block;
+    }
+
+    .btn-action-outline:hover {
+        background: #ff6b35;
+        color: white;
+    }
+
+    /* Full-width sections need negative margin to break out of container */
+    .full-width-section {
+        margin-left: calc(-50vw + 50%);
+        margin-right: calc(-50vw + 50%);
+        width: 100vw;
+    }
+
+    @@media (max-width: 768px) {
+        .hero-title {
+            font-size: 2.2rem;
+        }
+        .demo-content {
+            flex-direction: column;
+        }
+        .stat-number {
+            font-size: 1.5rem;
+        }
+    }
+</style>
+
+@if (HttpContext.Session.GetString("AccountId") == null)
+{
+    <!-- Hero Section for Guest -->
+    <section class="hero-section full-width-section">
+        <div class="container text-center">
+            <div class="hero-badge">
+                <i class="bi bi-stars"></i>
+                Sign up and get 10 free AI suggestions
+            </div>
+            <h1 class="hero-title">
+                Don't know <span>what to eat today?</span>
+            </h1>
+            <p class="hero-subtitle">
+                Let AI suggest meals that match your health, mood, and budget.
+                In just seconds, you'll have the perfect meal idea!
+            </p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a asp-page="/Account/Register" class="btn-hero-primary">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Start Free
+                </a>
+                <a asp-page="/Account/Login" class="btn-hero-outline">
+                    Login
+                </a>
+            </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card-modern text-center p-4 h-100">
-            <div class="mb-3"><i class="bi bi-clipboard-check display-4" style="color: var(--clr-success);"></i></div>
-            <h5 class="fw-bold">AI Meal Plans</h5>
-            <p class="text-muted small">Let AI build a personalized meal plan based on your health profile.</p>
-            @if (ViewContext.HttpContext.Session.GetString("AccountId") != null)
-            {
-                <a asp-page="/MealPlans/Generate" class="btn btn-outline-success btn-sm mt-auto">Generate Plan</a>
-            }
-            else
-            {
-                <a asp-page="/Account/Login" class="btn btn-outline-secondary btn-sm mt-auto">Login to Start</a>
-            }
+    </section>
+
+    <!-- Demo Section -->
+    <section class="demo-section full-width-section">
+        <div class="container text-center">
+            <a href="#" class="demo-link">
+                <i class="bi bi-play-circle"></i> Try Demo
+            </a>
+            <h2 class="h4 mb-2">Experience Without Registration</h2>
+            <p class="text-muted mb-4">See how Meal AI works - with just a few simple inputs, you'll get personalized meal suggestions</p>
+
+            <div class="demo-card">
+                <div class="demo-header">
+                    <span class="demo-dot red"></span>
+                    <span class="demo-dot yellow"></span>
+                    <span class="demo-dot green"></span>
+                    <span class="ms-auto text-muted" style="font-size: 13px;">
+                        <i class="bi bi-lightning-charge text-warning"></i> mealai.vn/suggest
+                    </span>
+                </div>
+                <div class="demo-content">
+                    <div class="demo-form">
+                        <div class="demo-input">
+                            <i class="bi bi-chat-dots"></i>
+                            <span class="text-muted">Tell me what you want...</span>
+                        </div>
+                        <div class="demo-input">
+                            <i class="bi bi-emoji-smile"></i>
+                            <span>Mood</span>
+                            <span class="ms-auto badge bg-light text-dark">A bit tired</span>
+                        </div>
+                        <div class="demo-input">
+                            <i class="bi bi-wallet2"></i>
+                            <span>Budget</span>
+                            <span class="ms-auto badge bg-light text-dark">$3-6</span>
+                        </div>
+                        <div class="demo-input">
+                            <i class="bi bi-clock"></i>
+                            <span>Time</span>
+                            <span class="ms-auto badge bg-light text-dark">30 min</span>
+                        </div>
+                        <button class="demo-btn" type="button">
+                            <i class="bi bi-search"></i>
+                            Finding ideal meal...
+                        </button>
+                    </div>
+                    <div class="demo-result">
+                        <div class="meal-card-demo">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <span class="meal-title-demo">Grilled Chicken Salad</span>
+                                <span class="meal-tag">+ Iced Tea</span>
+                            </div>
+                            <p class="meal-desc-demo">
+                                A fresh, healthy salad with grilled chicken breast, mixed greens, cherry tomatoes, and light vinaigrette dressing.
+                            </p>
+                            <div class="meal-stats-demo">
+                                <span><strong>450</strong> kcal</span>
+                                <span><strong>35g</strong> protein</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card-modern text-center p-4 h-100">
-            <div class="mb-3"><i class="bi bi-book display-4" style="color: var(--clr-warning);"></i></div>
-            <h5 class="fw-bold">Recipe Library</h5>
-            <p class="text-muted small">Explore recipes with full nutritional breakdowns and ingredients.</p>
-            <a asp-page="/Recipes/Index" class="btn btn-outline-warning btn-sm mt-auto">Browse Recipes</a>
+    </section>
+
+    <!-- Stats Section -->
+    <section class="stats-section full-width-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-lightbulb"></i>
+                        </div>
+                        <div class="stat-number">10,000+</div>
+                        <div class="stat-label">Suggestions Made</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="stat-number">2,500+</div>
+                        <div class="stat-label">Users</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-star"></i>
+                        </div>
+                        <div class="stat-number">4.9/5</div>
+                        <div class="stat-label">Rating</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <div class="stat-number">&lt;3s</div>
+                        <div class="stat-label">Response Time</div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
+    </section>
+
+    <!-- Why Section -->
+    <section class="why-section full-width-section">
+        <div class="container text-center">
+            <h2 class="section-title">Why Choose Meal AI?</h2>
+            <p class="section-subtitle">More than just meal suggestions - Meal AI understands you and cares about your health</p>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon pink">
+                            <i class="bi bi-heart-pulse"></i>
+                        </div>
+                        <h3 class="feature-title">Health Personalization</h3>
+                        <p class="feature-desc">Suggestions based on health profile, allergies, and diet. No worries about eating unsuitable foods.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon yellow">
+                            <i class="bi bi-lightning-charge"></i>
+                        </div>
+                        <h3 class="feature-title">Fast & Convenient</h3>
+                        <p class="feature-desc">Get suggestions in seconds. No need to write long prompts like ChatGPT!</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon green">
+                            <i class="bi bi-egg-fried"></i>
+                        </div>
+                        <h3 class="feature-title">Diverse Cuisine</h3>
+                        <p class="feature-desc">Wide variety of meals, suited to your taste preferences and local ingredients.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon purple">
+                            <i class="bi bi-robot"></i>
+                        </div>
+                        <h3 class="feature-title">Smart AI</h3>
+                        <p class="feature-desc">Using advanced AI that understands context and mood to suggest the most suitable meals.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon blue">
+                            <i class="bi bi-house-heart"></i>
+                        </div>
+                        <h3 class="feature-title">Cook or Order</h3>
+                        <p class="feature-desc">Flexibly choose to cook at home or order delivery. Suitable for all situations.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="feature-card">
+                        <div class="feature-icon orange">
+                            <i class="bi bi-clock-history"></i>
+                        </div>
+                        <h3 class="feature-title">Track History</h3>
+                        <p class="feature-desc">Review previously suggested meals. Never forget a delicious meal you've tried.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="how-section full-width-section">
+        <div class="container text-center">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Just 3 simple steps</p>
+
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div class="step-icon orange">
+                            <i class="bi bi-person-badge"></i>
+                        </div>
+                        <h3 class="step-title">Create Profile</h3>
+                        <p class="step-desc">Register and fill in your health info, allergies, and dietary preferences.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div class="step-icon brown">
+                            <i class="bi bi-chat-square-text"></i>
+                        </div>
+                        <h3 class="step-title">Enter Preferences</h3>
+                        <p class="step-desc">Tell us your mood, budget, and available time.</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div class="step-icon yellow-step">
+                            <i class="bi bi-stars"></i>
+                        </div>
+                        <h3 class="step-title">Get Suggestions</h3>
+                        <p class="step-desc">AI will suggest the best meals and drinks for you!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="cta-section full-width-section">
+        <div class="container">
+            <h2 class="cta-title">Ready to Discover Delicious Meals?</h2>
+            <p class="cta-subtitle">Join thousands of users who trust Meal AI for their daily meals</p>
+            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                <a asp-page="/Account/Register" class="btn-hero-primary btn-lg">
+                    <i class="bi bi-rocket-takeoff me-2"></i>Register Free Now
+                </a>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <!-- Hero Section for Logged In User -->
+    <section class="hero-section full-width-section" style="padding: 60px 0 40px;">
+        <div class="container text-center">
+            <h1 class="hero-title" style="font-size: 2.5rem;">
+                Welcome back, <span>@HttpContext.Session.GetString("FullName")</span>! 👋
+            </h1>
+            <p class="hero-subtitle">
+                What would you like to eat today? Let AI help you find the perfect meal!
+            </p>
+        </div>
+    </section>
+
+    <!-- Quick Actions -->
+    <section class="quick-actions full-width-section" style="background: #fafafa;">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-md-6 col-lg-3">
+                    <div class="action-card">
+                        <div class="action-icon orange">
+                            <i class="bi bi-magic"></i>
+                        </div>
+                        <h3 class="action-title">Meal Suggestions</h3>
+                        <p class="action-desc">AI suggests meals perfect for you right now</p>
+                        <a asp-page="/MealSuggestion/Index" class="btn-action">
+                            <i class="bi bi-stars me-2"></i>Find Meals
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="action-card">
+                        <div class="action-icon green">
+                            <i class="bi bi-calendar-week"></i>
+                        </div>
+                        <h3 class="action-title">Weekly Menu</h3>
+                        <p class="action-desc">View the planned menu for the week</p>
+                        <a asp-page="/Menu/Index" class="btn-action-outline">
+                            View Menu
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="action-card">
+                        <div class="action-icon blue">
+                            <i class="bi bi-journal-text"></i>
+                        </div>
+                        <h3 class="action-title">My Meal Plans</h3>
+                        <p class="action-desc">Manage your personal meal plans</p>
+                        <a asp-page="/MealPlans/Index" class="btn-action-outline">
+                            View Plans
+                        </a>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="action-card">
+                        <div class="action-icon purple">
+                            <i class="bi bi-person-heart"></i>
+                        </div>
+                        <h3 class="action-title">My Inventory</h3>
+                        <p class="action-desc">Check your fridge and pantry items</p>
+                        <a asp-page="/Fridge/Index" class="btn-action-outline">
+                            View Inventory
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Stats for logged in user -->
+    <section class="stats-section full-width-section">
+        <div class="container">
+            <div class="row">
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-calendar-check"></i>
+                        </div>
+                        <div class="stat-number">7</div>
+                        <div class="stat-label">Days in Plan</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-cup-hot"></i>
+                        </div>
+                        <div class="stat-number">21</div>
+                        <div class="stat-label">Scheduled Meals</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-bookmark-star"></i>
+                        </div>
+                        <div class="stat-number">15</div>
+                        <div class="stat-label">Favorite Recipes</div>
+                    </div>
+                </div>
+                <div class="col-6 col-md-3">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="bi bi-graph-up-arrow"></i>
+                        </div>
+                        <div class="stat-number">85%</div>
+                        <div class="stat-label">This Week's Goal</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+}
