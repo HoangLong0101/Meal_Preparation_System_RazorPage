@@ -189,6 +189,57 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        // giữ nguyên JS của bạn (không cần sửa)
+        function addIngredient() {
+            var index = $('#ingredients-table tr').length;
+            var row = `
+            <tr>
+                <td><input name="Ingredients[${index}].IngredientName" class="form-control form-control-modern" placeholder="e.g. chicken breast" /></td>
+                <td><input name="Ingredients[${index}].Amount" class="form-control form-control-modern" /></td>
+                <td><input name="Ingredients[${index}].Unit" class="form-control form-control-modern" placeholder="g, ml, pcs" /></td>
+                <td><button type="button" class="btn btn-outline-danger btn-sm" onclick="removeIngredient(this)"><i class="bi bi-trash"></i></button></td>
+            </tr>`;
+            $('#ingredients-table').append(row);
+            updateAnalyzeButton();
+        }
+
+        function removeIngredient(btn) {
+            $(btn).closest('tr').remove();
+            // reindex names so model binding works
+            $('#ingredients-table tr').each(function (i, tr) {
+                $(tr).find('input').each(function () {
+                    var name = $(this).attr('name');
+                    if (name) {
+                        var newName = name.replace(/Ingredients\[\d+\]/, 'Ingredients[' + i + ']');
+                        $(this).attr('name', newName);
+                    }
+                });
+            });
+            updateAnalyzeButton();
+        }
+
+        function updateAnalyzeButton() {
+            var enable = true;
+            var rows = $('#ingredients-table tr');
+            if (rows.length === 0) { enable = false; }
+            rows.each(function () {
+                var name = $(this).find('input[name$=".IngredientName"]').val();
+                var amount = $(this).find('input[name$=".Amount"]').val();
+                var unit = $(this).find('input[name$=".Unit"]').val();
+
+                if (!name || String(name).trim() === '') { enable = false; return; }
+                var num = parseFloat(amount);
+                if (isNaN(num) || num <= 0) { enable = false; return; }
+                if (!unit || String(unit).trim() === '') { enable = false; return; }
+            });
+            $('#analyze-btn').prop('disabled', !enable);
+        }
+
+        // delegated input events to update button state
+        $(document).on('input change', '#ingredients-table input', function () {
+            updateAnalyzeButton();
+        });
+
+        // initial check on page load
+        $(function () { updateAnalyzeButton(); });
     </script>
 }

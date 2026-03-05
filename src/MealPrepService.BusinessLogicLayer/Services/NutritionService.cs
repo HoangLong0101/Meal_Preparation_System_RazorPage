@@ -68,19 +68,34 @@ namespace MealPrepService.BusinessLogicLayer.Services
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("Return ONLY valid JSON.");
+            sb.AppendLine("You are a nutrition calculator. Analyze the following ingredients and return ONLY valid JSON matching this exact schema:");
             sb.AppendLine("""
         {
-          "ingredients": [],
-          "totals": {},
-          "advice": ""
+          "ingredients": [
+            {
+              "name": "ingredient name",
+              "amount": 100,
+              "unit": "g",
+              "calories": 200,
+              "protein_g": 10.5,
+              "carbs_g": 25.0,
+              "fat_g": 5.0
+            }
+          ],
+          "totals": {
+            "calories": 200,
+            "protein_g": 10.5,
+            "carbs_g": 25.0,
+            "fat_g": 5.0
+          },
+          "advice": "Brief nutrition advice based on the ingredients"
         }
         """);
 
-            sb.AppendLine("Ingredients:");
+            sb.AppendLine("Ingredients to analyze:");
             foreach (var item in ingredients)
             {
-                sb.AppendLine(item.Replace("{", "").Replace("}", ""));
+                sb.AppendLine("- " + item.Replace("{", "").Replace("}", ""));
             }
 
             return sb.ToString();
@@ -90,27 +105,74 @@ namespace MealPrepService.BusinessLogicLayer.Services
         {
             using var doc = JsonDocument.Parse(responseText);
 
-            var aiText = doc.RootElement
+            // Gemini 2.5 Flash may include a "thought" part before the actual text.
+            // Iterate parts backwards to find the last non-thought text part.
+            var parts = doc.RootElement
                 .GetProperty("candidates")[0]
                 .GetProperty("content")
-                .GetProperty("parts")[0]
-                .GetProperty("text")
-                .GetString();
+                .GetProperty("parts");
 
-            using var jsonDoc = JsonDocument.Parse(aiText!);
+            string? aiText = null;
+            for (int i = parts.GetArrayLength() - 1; i >= 0; i--)
+            {
+                var part = parts[i];
+                if (part.TryGetProperty("thought", out var thought) && thought.GetBoolean())
+                    continue;
+                if (part.TryGetProperty("text", out var textProp))
+                {
+                    aiText = textProp.GetString();
+                    break;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(aiText))
+                throw new Exception("AI returned no content.");
+
+            using var jsonDoc = JsonDocument.Parse(aiText);
 
             var result = new NutritionResultDto();
 
             var totals = jsonDoc.RootElement.GetProperty("totals");
 
-            result.TotalCalories = totals.GetProperty("calories").GetSingle();
-            result.TotalProteinG = totals.GetProperty("protein_g").GetSingle();
-            result.TotalCarbsG = totals.GetProperty("carbs_g").GetSingle();
-            result.TotalFatG = totals.GetProperty("fat_g").GetSingle();
+            result.TotalCalories = GetFloatSafe(totals, "calories");
+            result.TotalProteinG = GetFloatSafe(totals, "protein_g");
+            result.TotalCarbsG = GetFloatSafe(totals, "carbs_g");
+            result.TotalFatG = GetFloatSafe(totals, "fat_g");
 
-            result.Advice = jsonDoc.RootElement.GetProperty("advice").GetString() ?? "";
+            result.Advice = jsonDoc.RootElement.TryGetProperty("advice", out var adviceProp)
+                ? adviceProp.GetString() ?? ""
+                : "";
+
+            if (jsonDoc.RootElement.TryGetProperty("ingredients", out var ingredientsArr))
+            {
+                foreach (var ing in ingredientsArr.EnumerateArray())
+                {
+                    result.Ingredients.Add(new IngredientNutritionDto
+                    {
+                        Name = ing.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
+                        Amount = GetFloatSafe(ing, "amount"),
+                        Unit = ing.TryGetProperty("unit", out var u) ? u.GetString() ?? "" : "",
+                        Calories = GetFloatSafe(ing, "calories"),
+                        ProteinG = GetFloatSafe(ing, "protein_g"),
+                        CarbsG = GetFloatSafe(ing, "carbs_g"),
+                        FatG = GetFloatSafe(ing, "fat_g")
+                    });
+                }
+            }
 
             return result;
+        }
+
+        private static float GetFloatSafe(JsonElement element, string propertyName)
+        {
+            if (!element.TryGetProperty(propertyName, out var prop))
+                return 0f;
+            return prop.ValueKind switch
+            {
+                JsonValueKind.Number => prop.GetSingle(),
+                JsonValueKind.String => float.TryParse(prop.GetString(), out var v) ? v : 0f,
+                _ => 0f
+            };
         }
     }
 }
