@@ -1,0 +1,278 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.Admin.MenuManagementModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Menu Management";
+}
+
+<a asp-page="/Admin/Dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+
+<div class="page-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h2><i class="bi bi-calendar3 me-2" style="color: var(--clr-primary);"></i>Menu Management</h2>
+            <p class="mb-0">Create daily menus, add meals, and publish for customers</p>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    @* Left column: Create menu + Add meal *@
+    <div class="col-lg-4">
+        @* Create new menu *@
+        <div class="card-modern p-4 mb-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-calendar-plus me-2" style="color: var(--clr-success);"></i>Create Daily Menu</h5>
+            <form method="post" asp-page-handler="CreateMenu">
+                @Html.AntiForgeryToken()
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Menu Date</label>
+                    <input asp-for="NewMenuDate" type="date" class="form-control form-control-modern" min="@DateTime.Today.ToString("yyyy-MM-dd")" required />
+                </div>
+                <button type="submit" class="btn btn-primary-custom w-100" style="background: var(--clr-success);">
+                    <i class="bi bi-plus-lg me-1"></i> Create Menu
+                </button>
+            </form>
+        </div>
+
+        @* Add meal to existing menu *@
+        @{
+            var menusForAdding = Model.AllMenus
+                .Where(m => m.Status != "inactive")
+                .OrderBy(m => m.MenuDate)
+                .ToList();
+        }
+
+        @if (menusForAdding.Any() && Model.AvailableRecipes.Any())
+        {
+            <div class="card-modern p-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-plus-circle me-2" style="color: var(--clr-primary);"></i>Add Meal to Menu</h5>
+                <form method="post" asp-page-handler="AddMeal">
+                    @Html.AntiForgeryToken()
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Select Menu</label>
+                        <select asp-for="AddToMenuId" class="form-select form-control-modern" required>
+                            <option value="">Choose a menu...</option>
+                            @foreach (var menu in menusForAdding.OrderBy(m => m.MenuDate))
+                            {
+                                <option value="@menu.Id">@menu.MenuDate.ToString("ddd, MMM dd") (@menu.Status)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Recipe</label>
+                        <select asp-for="SelectedRecipeId" class="form-select form-control-modern" required>
+                            <option value="">Choose a recipe...</option>
+                            @foreach (var recipe in Model.AvailableRecipes)
+                            {
+                                <option value="@recipe.Id">@recipe.RecipeName (@Math.Round(recipe.TotalCalories, 0) kcal)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Price (₫)</label>
+                        <input asp-for="MealPrice" type="number" class="form-control form-control-modern" min="1000" step="1000" required />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Available Quantity</label>
+                        <input asp-for="MealQuantity" type="number" class="form-control form-control-modern" min="1" required />
+                    </div>
+                    <button type="submit" class="btn btn-primary-custom w-100">
+                        <i class="bi bi-plus-lg me-1"></i> Add Meal
+                    </button>
+                </form>
+            </div>
+        }
+    </div>
+
+    @* Right column: Existing menus *@
+    <div class="col-lg-8">
+        @if (Model.TodayMenu != null)
+        {
+            <div class="card-modern mb-4">
+                <div class="px-4 py-3 d-flex justify-content-between align-items-center" style="background: var(--clr-primary); border-radius: var(--radius) var(--radius) 0 0;">
+                    <div class="text-white">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-star-fill me-2"></i>Today — @Model.TodayMenu.MenuDate.ToString("dddd, MMM dd yyyy")</h5>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-white text-dark">@Model.TodayMenu.Status</span>
+                        @if (Model.TodayMenu.Status == "draft")
+                        {
+                            <form method="post" asp-page-handler="Publish">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="menuId" value="@Model.TodayMenu.Id" />
+                                <button type="submit" class="btn btn-sm btn-light fw-bold">
+                                    <i class="bi bi-megaphone me-1"></i>Publish
+                                </button>
+                            </form>
+                        }
+                        @if (Model.TodayMenu.Status == "active")
+                        {
+                            <form method="post" asp-page-handler="Deactivate"
+                                  data-confirm='{"title":"Deactivate Menu?","message":"This menu will no longer be visible to customers.","icon":"bi-pause-circle","confirmText":"Deactivate"}'>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="menuId" value="@Model.TodayMenu.Id" />
+                                <button type="submit" class="btn btn-sm btn-light text-danger fw-bold">
+                                    <i class="bi bi-pause-circle me-1"></i>Deactivate
+                                </button>
+                            </form>
+                        }
+                        @if (Model.TodayMenu.Status == "inactive")
+                        {
+                            <form method="post" asp-page-handler="Reactivate">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="menuId" value="@Model.TodayMenu.Id" />
+                                <button type="submit" class="btn btn-sm btn-light text-success fw-bold">
+                                    <i class="bi bi-play-circle me-1"></i>Reactivate
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.TodayMenu.MenuMeals.Any())
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-modern mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Recipe</th>
+                                        <th>Price</th>
+                                        <th>Quantity</th>
+                                        <th>Status</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var meal in Model.TodayMenu.MenuMeals)
+                                    {
+                                        <tr>
+                                            <td class="fw-semibold">@meal.RecipeName</td>
+                                            <td>@meal.Price.ToString("N0") ₫</td>
+                                            <td>
+                                                <form method="post" asp-page-handler="UpdateQuantity" class="d-flex align-items-center gap-2" style="max-width: 160px;">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="menuMealId" value="@meal.Id" />
+                                                    <input type="number" name="newQuantity" value="@meal.AvailableQuantity" min="0"
+                                                           class="form-control form-control-sm" style="width: 70px;" />
+                                                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                                                        <i class="bi bi-check-lg"></i>
+                                                    </button>
+                                                </form>
+                                            </td>
+                                            <td>
+                                                @if (meal.IsSoldOut)
+                                                {
+                                                    <span class="badge badge-soft-danger">Sold Out</span>
+                                                }
+                                                else
+                                                {
+                                                    <span class="badge badge-soft-success">Available</span>
+                                                }
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-soft-muted">@Math.Round(meal.Recipe.TotalCalories, 0) kcal</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                    else
+                    {
+                        <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>No meals added yet. Use the form on the left to add meals.</p>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card-modern p-4 mb-4 text-center" style="border-left: 4px solid var(--clr-warning);">
+                <i class="bi bi-calendar-x display-4 text-muted"></i>
+                <h5 class="mt-3">No Menu for Today</h5>
+                <p class="text-muted">Create today's menu using the form on the left.</p>
+            </div>
+        }
+
+        @{
+            var otherMenus = Model.AllMenus
+                .Where(m => m.MenuDate.Date != DateTime.Today)
+                .OrderBy(m => m.MenuDate)
+                .ToList();
+        }
+
+        @if (otherMenus.Any())
+        {
+            <h5 class="fw-bold mb-3"><i class="bi bi-calendar-week me-2"></i>All Other Menus</h5>
+            @foreach (var menu in otherMenus)
+            {
+                <div class="card-modern mb-3 @(menu.Status == "inactive" ? "opacity-50" : "")">
+                    <div class="card-header bg-transparent px-4 py-3 d-flex justify-content-between align-items-center" style="border-bottom: 1px solid var(--clr-border);">
+                        <strong><i class="bi bi-calendar-day me-2"></i>@menu.MenuDate.ToString("dddd, MMM dd")</strong>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge @(menu.Status switch
+                            {
+                                "active" => "badge-soft-success",
+                                "draft" => "badge-soft-warning",
+                                "inactive" => "badge-soft-danger",
+                                _ => "badge-soft-muted"
+                            })">@menu.Status</span>
+                            @if (menu.Status == "draft")
+                            {
+                                <form method="post" asp-page-handler="Publish">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="menuId" value="@menu.Id" />
+                                    <button type="submit" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-megaphone me-1"></i>Publish
+                                    </button>
+                                </form>
+                            }
+                            @if (menu.Status == "active")
+                            {
+                                <form method="post" asp-page-handler="Deactivate"
+                                      data-confirm='{"title":"Deactivate Menu?","message":"This menu will no longer be visible to customers.","icon":"bi-pause-circle","confirmText":"Deactivate"}'>
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="menuId" value="@menu.Id" />
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                                        <i class="bi bi-pause-circle me-1"></i>Deactivate
+                                    </button>
+                                </form>
+                            }
+                            @if (menu.Status == "inactive" && menu.MenuDate.Date >= DateTime.Today)
+                            {
+                                <form method="post" asp-page-handler="Reactivate">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="menuId" value="@menu.Id" />
+                                    <button type="submit" class="btn btn-outline-success btn-sm">
+                                        <i class="bi bi-play-circle me-1"></i>Reactivate
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
+                        @if (menu.MenuMeals.Any())
+                        {
+                            <div class="d-flex flex-wrap gap-2">
+                                @foreach (var meal in menu.MenuMeals)
+                                {
+                                    <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-3" style="background: var(--clr-bg); border: 1px solid var(--clr-border);">
+                                        <span class="fw-semibold">@meal.RecipeName</span>
+                                        <span class="text-muted">@meal.Price.ToString("N0") ₫</span>
+                                        <span class="badge @(meal.IsSoldOut ? "badge-soft-danger" : "badge-soft-success")">
+                                            @(meal.IsSoldOut ? "Sold Out" : $"{meal.AvailableQuantity} left")
+                                        </span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-muted mb-0">No meals added.</p>
+                        }
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>

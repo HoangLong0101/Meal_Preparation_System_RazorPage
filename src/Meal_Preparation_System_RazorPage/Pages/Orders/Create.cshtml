@@ -43,7 +43,7 @@
                         <div class="price mt-2">@Model.SelectedMeal.Price.ToString("N0") ₫ <span class="text-muted small fw-normal">each</span></div>
                     </div>
 
-                    <form method="post">
+                    <form method="post" data-confirm='{"title":"Confirm Order?","message":"Your order will be placed and confirmed immediately.","icon":"bi-bag-check","confirmText":"Place Order","cancelText":"Go Back"}'>
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="MenuMealId" />
 

@@ -20,7 +20,7 @@
 <div class="order-detail-header">
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="mb-0"><i class="bi bi-receipt me-2" style="color: #ff6b35;"></i>Order Details</h3>
-        <span class="badge fs-6 px-3 py-2 @(Model.Order.Status switch
+        <span id="order-status-badge" class="badge fs-6 px-3 py-2 @(Model.Order.Status switch
         {
             "Completed" => "badge-soft-success",
             "Pending" => "badge-soft-warning",
@@ -101,3 +101,41 @@
         </div>
     }
 </div>
+
+@section Scripts {
+    <script>
+        (function () {
+            const orderId = "@Model.Order.Id";
+
+            if (typeof mealPrepConnection !== "undefined") {
+                // Connection is already started from _Layout — just join the order group
+                if (mealPrepConnection.state === "Connected") {
+                    mealPrepConnection.invoke("JoinOrderGroup", orderId).catch(() => { });
+                } else {
+                    mealPrepConnection.onreconnected(() => {
+                        mealPrepConnection.invoke("JoinOrderGroup", orderId).catch(() => { });
+                    });
+                }
+
+                document.addEventListener("orderStatusUpdated", (e) => {
+                    if (e.detail.orderId === orderId) {
+                        const badge = document.getElementById("order-status-badge");
+                        if (badge) {
+                            badge.textContent = e.detail.newStatus;
+                            badge.className = "badge fs-6 px-3 py-2 " + getStatusBadgeClass(e.detail.newStatus);
+                        }
+                    }
+                });
+            }
+
+            function getStatusBadgeClass(status) {
+                switch (status.toLowerCase()) {
+                    case "completed": case "confirmed": case "delivered": return "badge-soft-success";
+                    case "pending": case "pending_payment": return "badge-soft-warning";
+                    case "cancelled": case "payment_failed": return "badge-soft-danger";
+                    default: return "badge-soft-muted";
+                }
+            }
+        })();
+    </script>
+}

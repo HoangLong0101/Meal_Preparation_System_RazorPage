@@ -84,11 +84,11 @@
         <div class="p-4">
             @if (Model.TodayMenu.MenuMeals.Any())
             {
-                <div class="row g-3">
+                <div class="row g-3" id="today-menu-meals">
                     @foreach (var menuMeal in Model.TodayMenu.MenuMeals)
                     {
-                        <div class="col-md-4">
-                            <div class="menu-meal-card h-100 @(menuMeal.IsSoldOut ? "sold-out" : "")">
+                        <div class="col-md-4" data-meal-name="@menuMeal.RecipeName">
+                            <div class="menu-meal-card h-100 @(menuMeal.IsSoldOut ? "sold-out" : "")" data-menu-card="@menuMeal.RecipeName">
                                 <div class="card-body p-4">
                                     <h6 class="fw-bold">@menuMeal.RecipeName</h6>
                                     <div class="d-flex gap-1 flex-wrap mb-2">
@@ -99,17 +99,17 @@
                                         <span class="price-tag">@menuMeal.Price.ToString("N0") ₫</span>
                                         @if (menuMeal.IsSoldOut)
                                         {
-                                            <span class="badge badge-soft-danger">Sold Out</span>
+                                            <span class="badge badge-soft-danger" data-stock-badge>Sold Out</span>
                                         }
                                         else
                                         {
-                                            <span class="text-muted small"><i class="bi bi-box me-1"></i>@menuMeal.AvailableQuantity left</span>
+                                            <span class="text-muted small" data-stock-badge><i class="bi bi-box me-1"></i><span data-stock-count>@menuMeal.AvailableQuantity</span> left</span>
                                         }
                                     </div>
                                 </div>
                                 @if (!menuMeal.IsSoldOut && HttpContext.Session.GetString("AccountId") != null)
                                 {
-                                    <div class="card-footer p-3" style="background: #fafafa; border-top: 1px solid #f0f0f0;">
+                                    <div class="card-footer p-3" style="background: #fafafa; border-top: 1px solid #f0f0f0;" data-order-footer>
                                         <a asp-page="/Orders/Create" asp-route-menuMealId="@menuMeal.Id" class="btn btn-order btn-sm w-100">
                                             <i class="bi bi-bag-plus me-1"></i>Order Now
                                         </a>
@@ -166,4 +166,35 @@ else
             </div>
         </div>
     }
+}
+
+@section Scripts {
+    <script>
+        // Live quantity / sold-out updates — no page refresh
+        document.addEventListener("menuMealQuantityChanged", (e) => {
+            const { mealName, newQty, isSoldOut } = e.detail;
+            const card = document.querySelector(`[data-menu-card="${mealName}"]`);
+            if (!card) return;
+
+            if (isSoldOut) {
+                card.classList.add("opacity-50");
+                const badge = card.querySelector("[data-stock-badge]");
+                if (badge) {
+                    badge.className = "badge badge-soft-danger";
+                    badge.setAttribute("data-stock-badge", "");
+                    badge.innerHTML = "Sold Out";
+                }
+                const footer = card.querySelector("[data-order-footer]");
+                if (footer) footer.remove();
+            } else {
+                const countEl = card.querySelector("[data-stock-count]");
+                if (countEl) countEl.textContent = newQty;
+            }
+        });
+
+        // Structural changes (publish / add meal) — reload to show new content
+        document.addEventListener("menuStructureChanged", () => {
+            location.reload();
+        });
+    </script>
 }

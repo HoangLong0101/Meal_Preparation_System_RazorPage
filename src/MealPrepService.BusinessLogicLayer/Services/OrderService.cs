@@ -211,6 +211,21 @@ namespace MealPrepService.BusinessLogicLayer.Services
             return orderDtos;
         }
 
+        public async Task<IEnumerable<OrderDto>> GetAllOrdersAsync()
+        {
+            var orders = await _unitOfWork.Orders.GetAllAsync();
+            var orderDtos = new List<OrderDto>();
+
+            foreach (var order in orders)
+            {
+                var fullOrder = await _unitOfWork.Orders.GetWithDetailsAsync(order.Id);
+                if (fullOrder != null)
+                    orderDtos.Add(await MapToDtoAsync(fullOrder));
+            }
+
+            return orderDtos;
+        }
+
         public async Task<OrderDto> ProcessVnpayCallbackAsync(VnpayCallbackDto callbackDto)
         {
             var callbackResult = await _vnpayService.ProcessCallbackAsync(callbackDto);

@@ -1,7 +1,9 @@
+using Meal_Preparation_System_RazorPage.Hubs;
 using MealPrepService.BusinessLogicLayer.DTOs;
 using MealPrepService.BusinessLogicLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Meal_Preparation_System_RazorPage.Pages.Orders
 {
@@ -9,11 +11,13 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
     {
         private readonly IOrderService _orderService;
         private readonly IMenuService _menuService;
+        private readonly IHubContext<MealPrepHub> _hubContext;
 
-        public CreateModel(IOrderService orderService, IMenuService menuService)
+        public CreateModel(IOrderService orderService, IMenuService menuService, IHubContext<MealPrepHub> hubContext)
         {
             _orderService = orderService;
             _menuService = menuService;
+            _hubContext = hubContext;
         }
 
         public MenuMealDto? SelectedMeal { get; set; }
@@ -60,10 +64,31 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
                 };
 
                 var order = await _orderService.CreateOrderAsync(Guid.Parse(accountIdStr), items);
-                var processedOrder = await _orderService.ProcessPaymentAsync(order.Id, PaymentMethod);
 
-                TempData["SuccessMessage"] = "Order placed successfully!";
-                return RedirectToPage("/Orders/Details", new { id = processedOrder.Id });
+                // Skip payment — auto-confirm the order
+                await _orderService.UpdateOrderStatusAsync(order.Id, "confirmed");
+                var confirmedOrder = await _orderService.GetByIdAsync(order.Id);
+
+                // Notify all menu viewers about the quantity change
+                var updatedMeal = await _menuService.GetMenuMealAsync(MenuMealId);
+                if (updatedMeal != null)
+                {
+                    var updateType = updatedMeal.IsSoldOut ? "SoldOut" : "QuantityChanged";
+                    var detail = updatedMeal.IsSoldOut ? "0" : $"{updatedMeal.AvailableQuantity}";
+                    await _hubContext.Clients.Group("menu")
+                        .SendAsync("MenuMealQuantityChanged", updatedMeal.RecipeName, updatedMeal.AvailableQuantity, updatedMeal.IsSoldOut);
+                }
+
+                // Notify admin that a new order was placed
+                await _hubContext.Clients.Group("admin")
+                    .SendAsync("NewOrderPlaced", confirmedOrder.Id.ToString(),
+                        confirmedOrder.OrderDate.ToString("MMM dd, yyyy HH:mm"),
+                        confirmedOrder.TotalAmount.ToString("N0"),
+                        confirmedOrder.Status,
+                        confirmedOrder.OrderDetails.Count);
+
+                TempData["SuccessMessage"] = "Order placed and confirmed!";
+                return RedirectToPage("/Orders/Details", new { id = confirmedOrder.Id });
             }
             catch (Exception ex)
             {

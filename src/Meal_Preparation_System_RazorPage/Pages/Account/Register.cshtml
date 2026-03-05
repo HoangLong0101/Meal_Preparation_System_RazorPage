@@ -144,15 +144,22 @@
                 </div>
             </div>
 
-            <!-- Register Form Column -->
             <div class="col-lg-7">
                 <div class="register-card">
                     <div class="register-header">
-                        <i class="bi bi-person-plus"></i>
-                        <h3>Create Account</h3>
-                        <p>Join thousands of happy Meal AI users</p>
+                        <i class="bi bi-rocket-takeoff"></i>
+                        <h3>Create Your Account</h3>
+                        <p>Join thousands of happy meal planners</p>
                     </div>
                     <div class="register-body">
+                        @if (TempData["ErrorMessage"] != null)
+                        {
+                            <div class="alert alert-danger d-flex align-items-center" role="alert">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <div>@TempData["ErrorMessage"]</div>
+                            </div>
+                        }
+
                         <form method="post">
                             @Html.AntiForgeryToken()
 

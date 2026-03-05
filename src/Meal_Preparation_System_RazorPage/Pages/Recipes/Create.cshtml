@@ -26,14 +26,20 @@
 
 <div class="row g-4">
     <div class="col-lg-7">
-        <div class="recipe-form-card">
-            <div class="recipe-form-header">
-                <h3><i class="bi bi-plus-circle me-2"></i>Create Recipe</h3>
-                <p>Add a new recipe with nutritional information</p>
-            </div>
-            <div class="recipe-form-body">
-                <form method="post">
-                    @Html.AntiForgeryToken()
+        <div class="card-modern p-4">
+            <h3 class="fw-bold mb-1"><i class="bi bi-plus-circle me-2" style="color: var(--clr-primary);"></i>Create Recipe</h3>
+            <p class="text-muted small mb-4">Add a new recipe with nutritional information</p>
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger d-flex align-items-center" role="alert">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <div>@TempData["ErrorMessage"]</div>
+                </div>
+            }
+
+            <form method="post">
+                @Html.AntiForgeryToken()
 
                     <div class="mb-3">
                         <label class="form-label fw-semibold">Recipe Name</label>
@@ -68,37 +74,33 @@
                         <i class="bi bi-check-lg me-1"></i> Create Recipe
                     </button>
                 </form>
-            </div>
         </div>
     </div>
 
     <div class="col-lg-5">
-        <div class="ai-card">
-            <div class="ai-card-header">
-                <h5><i class="bi bi-stars me-2"></i>AI Recipe Generator</h5>
-                <p>Let AI generate recipes based on your health profile and preferences.</p>
-            </div>
-            <div class="ai-card-body">
-                <form method="post" asp-page-handler="GenerateAI">
-                    @Html.AntiForgeryToken()
+        <div class="card-modern p-4">
+            <h5 class="fw-bold mb-1"><i class="bi bi-stars me-2" style="color: var(--clr-success);"></i>AI Recipe Generator</h5>
+            <p class="text-muted small mb-4">Let AI generate recipes based on your health profile and preferences.</p>
 
-                    <div class="mb-3">
-                        <label class="form-label fw-semibold">Cuisine Type</label>
-                        <select name="cuisineType" class="form-select form-control-modern">
-                            <option value="Vietnamese">🇻🇳 Vietnamese</option>
-                            <option value="Japanese">🇯🇵 Japanese</option>
-                            <option value="Korean">🇰🇷 Korean</option>
-                            <option value="Italian">🇮🇹 Italian</option>
-                            <option value="Mexican">🇲🇽 Mexican</option>
-                            <option value="Indian">🇮🇳 Indian</option>
-                        </select>
-                    </div>
+            <form method="post" asp-page-handler="GenerateAI">
+                @Html.AntiForgeryToken()
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Cuisine Type</label>
+                    <select name="cuisineType" class="form-select form-control-modern">
+                        <option value="Vietnamese">🇻🇳 Vietnamese</option>
+                        <option value="Japanese">🇯🇵 Japanese</option>
+                        <option value="Korean">🇰🇷 Korean</option>
+                        <option value="Italian">🇮🇹 Italian</option>
+                        <option value="Mexican">🇲🇽 Mexican</option>
+                        <option value="Indian">🇮🇳 Indian</option>
+                    </select>
+                </div>
 
                     <button type="submit" class="btn btn-ai w-100">
                         <i class="bi bi-stars me-1"></i> Generate 3 AI Recipes
                     </button>
                 </form>
-            </div>
         </div>
     </div>
 </div>

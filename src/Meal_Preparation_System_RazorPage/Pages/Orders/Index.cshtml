@@ -60,7 +60,6 @@ else
                         <th>Order Date</th>
                         <th>Items</th>
                         <th>Total</th>
-                        <th>Payment</th>
                         <th>Status</th>
                         <th></th>
                     </tr>
@@ -68,7 +67,7 @@ else
                 <tbody>
                     @foreach (var order in Model.Orders.OrderByDescending(o => o.OrderDate))
                     {
-                        <tr>
+                        <tr data-order-id="@order.Id">
                             <td>
                                 <div class="fw-semibold">@order.OrderDate.ToString("MMM dd, yyyy")</div>
                                 <div class="text-muted small">@order.OrderDate.ToString("HH:mm")</div>
@@ -76,23 +75,13 @@ else
                             <td><span class="badge badge-soft-muted">@order.OrderDetails.Count item(s)</span></td>
                             <td class="fw-bold" style="color: #ff6b35;">@order.TotalAmount.ToString("N0") ₫</td>
                             <td>
-                                @if (order.PaymentMethod != null)
-                                {
-                                    <span><i class="bi bi-credit-card me-1"></i>@order.PaymentMethod</span>
-                                }
-                                else
-                                {
-                                    <span class="text-muted">—</span>
-                                }
-                            </td>
-                            <td>
                                 <span class="badge @(order.Status switch
                                 {
-                                    "Completed" => "badge-soft-success",
-                                    "Pending" => "badge-soft-warning",
-                                    "Cancelled" => "badge-soft-danger",
+                                    "confirmed" or "delivered" => "badge-soft-success",
+                                    "pending" or "pending_payment" => "badge-soft-warning",
+                                    "payment_failed" or "cancelled" => "badge-soft-danger",
                                     _ => "badge-soft-muted"
-                                })">@order.Status</span>
+                                })" data-order-status-badge>@order.Status</span>
                             </td>
                             <td>
                                 <a asp-page="/Orders/Details" asp-route-id="@order.Id" class="btn btn-outline-primary btn-sm">
@@ -105,4 +94,24 @@ else
             </table>
         </div>
     </div>
+}
+
+@section Scripts {
+    <script>
+        // Live status updates on the order list page
+        document.addEventListener("orderStatusUpdated", (e) => {
+            const row = document.querySelector(`tr[data-order-id="${e.detail.orderId}"]`);
+            if (!row) return;
+            const badge = row.querySelector("[data-order-status-badge]");
+            if (!badge) return;
+            const s = e.detail.newStatus.toLowerCase();
+            badge.textContent = e.detail.newStatus;
+            badge.className = "badge " + (
+                s === "confirmed" || s === "delivered" ? "badge-soft-success" :
+                s === "pending" || s === "pending_payment" ? "badge-soft-warning" :
+                s === "payment_failed" || s === "cancelled" ? "badge-soft-danger" :
+                "badge-soft-muted"
+            );
+        });
+    </script>
 }

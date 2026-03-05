@@ -273,6 +273,41 @@ namespace MealPrepService.DataAccessLayer.Migrations
                     b.ToTable("DeliverySchedules");
                 });
 
+            modelBuilder.Entity("MealPrepService.DataAccessLayer.Entities.FamilyMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int?>("Age")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    SqlServerKeyBuilderExtensions.IsClustered(b.HasKey("Id"), false);
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("FamilyMembers");
+                });
+
             modelBuilder.Entity("MealPrepService.DataAccessLayer.Entities.FridgeItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -477,6 +512,9 @@ namespace MealPrepService.DataAccessLayer.Migrations
 
                     b.Property<Guid>("RecipeId")
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("Finished")
+                        .HasColumnType("bit");
 
                     b.HasKey("MealId", "RecipeId");
 
@@ -826,6 +864,17 @@ namespace MealPrepService.DataAccessLayer.Migrations
                     b.Navigation("Order");
                 });
 
+            modelBuilder.Entity("MealPrepService.DataAccessLayer.Entities.FamilyMember", b =>
+                {
+                    b.HasOne("MealPrepService.DataAccessLayer.Entities.Account", "Account")
+                        .WithMany("FamilyMembers")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("MealPrepService.DataAccessLayer.Entities.FridgeItem", b =>
                 {
                     b.HasOne("MealPrepService.DataAccessLayer.Entities.Account", "Account")
@@ -986,6 +1035,8 @@ namespace MealPrepService.DataAccessLayer.Migrations
 
             modelBuilder.Entity("MealPrepService.DataAccessLayer.Entities.Account", b =>
                 {
+                    b.Navigation("FamilyMembers");
+
                     b.Navigation("FridgeItems");
 
                     b.Navigation("HealthProfile");

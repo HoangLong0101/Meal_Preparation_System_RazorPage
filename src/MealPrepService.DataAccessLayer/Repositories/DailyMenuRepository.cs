@@ -35,6 +35,15 @@ namespace MealPrepService.DataAccessLayer.Repositories
                 .ToListAsync();
         }
 
+        public async Task<IEnumerable<DailyMenu>> GetAllMenusAsync()
+        {
+            return await _dbSet
+                .Include(dm => dm.MenuMeals)
+                    .ThenInclude(mm => mm.Recipe)
+                .OrderByDescending(dm => dm.MenuDate)
+                .ToListAsync();
+        }
+
         public async Task<DailyMenu?> GetWithMealsAsync(Guid menuId)
         {
             return await _dbSet

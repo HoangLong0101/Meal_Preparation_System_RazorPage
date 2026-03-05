@@ -1,0 +1,122 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.Admin.OrdersModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "All Orders";
+}
+
+<a asp-page="/Admin/Dashboard" class="btn-back"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+
+<div class="page-header">
+    <h2><i class="bi bi-bag-check me-2" style="color: var(--clr-primary);"></i>All Orders</h2>
+    <p class="mb-0">Manage and update order statuses</p>
+</div>
+
+@if (!Model.Orders.Any())
+{
+    <div class="empty-state" id="empty-orders-state">
+        <i class="bi bi-bag display-1 text-muted"></i>
+        <h5 class="mt-3">No Orders Yet</h5>
+        <p>Orders will appear here once customers place them.</p>
+    </div>
+}
+else
+{
+    <div class="card-modern">
+        <div class="table-responsive">
+            <table class="table table-modern mb-0">
+                <thead>
+                    <tr>
+                        <th>Order Date</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody id="admin-orders-tbody">
+                    @foreach (var order in Model.Orders.OrderByDescending(o => o.OrderDate))
+                    {
+                        <tr data-order-id="@order.Id">
+                            <td>
+                                <div class="fw-semibold">@order.OrderDate.ToString("MMM dd, yyyy")</div>
+                                <div class="text-muted small">@order.OrderDate.ToString("HH:mm")</div>
+                            </td>
+                            <td class="small text-muted">@order.AccountId.ToString()[..8]…</td>
+                            <td><span class="badge badge-soft-muted">@order.OrderDetails.Count item(s)</span></td>
+                            <td class="fw-bold" style="color: var(--clr-primary);">@order.TotalAmount.ToString("N0") ₫</td>
+                            <td>
+                                @if (order.PaymentMethod != null)
+                                {
+                                    <span><i class="bi bi-credit-card me-1"></i>@order.PaymentMethod</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">—</span>
+                                }
+                            </td>
+                            <td>
+                                <span class="badge @(order.Status switch
+                                {
+                                    "confirmed" or "delivered" => "badge-soft-success",
+                                    "pending" or "pending_payment" => "badge-soft-warning",
+                                    "payment_failed" or "cancelled" => "badge-soft-danger",
+                                    _ => "badge-soft-muted"
+                                })" data-order-status-badge>@order.Status</span>
+                            </td>
+                            <td>
+                                <form method="post" asp-page-handler="UpdateStatus" class="d-flex align-items-center gap-1">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="orderId" value="@order.Id" />
+                                    <select name="newStatus" class="form-select form-select-sm" style="width: 130px;">
+                                        <option value="pending" selected="@(order.Status == "pending")">pending</option>
+                                        <option value="confirmed" selected="@(order.Status == "confirmed")">confirmed</option>
+                                        <option value="delivered" selected="@(order.Status == "delivered")">delivered</option>
+                                    </select>
+                                    <button type="submit" class="btn btn-outline-primary btn-sm">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // New order placed by a customer — inject row into table
+        document.addEventListener("newOrderPlaced", (e) => {
+            const { orderId, date, total, status, itemCount } = e.detail;
+            const tbody = document.getElementById("admin-orders-tbody");
+            const empty = document.getElementById("empty-orders-state");
+            if (empty) empty.remove();
+
+            if (!tbody) { location.reload(); return; }
+
+            const badgeClass = status === "confirmed" || status === "delivered"
+                ? "badge-soft-success"
+                : status === "pending" || status === "pending_payment"
+                    ? "badge-soft-warning" : "badge-soft-muted";
+
+            const row = document.createElement("tr");
+            row.setAttribute("data-order-id", orderId);
+            row.style.animation = "fadeIn .4s ease";
+            row.innerHTML = `
+                <td><div class="fw-semibold">${date}</div></td>
+                <td class="small text-muted">${orderId.substring(0, 8)}…</td>
+                <td><span class="badge badge-soft-muted">${itemCount} item(s)</span></td>
+                <td class="fw-bold" style="color: var(--clr-primary);">${total} ₫</td>
+                <td><span class="text-muted">—</span></td>
+                <td><span class="badge ${badgeClass}" data-order-status-badge>${status}</span></td>
+                <td><a href="/Admin/Orders" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Refresh</a></td>
+            `;
+            tbody.insertBefore(row, tbody.firstChild);
+        });
+    </script>
+}

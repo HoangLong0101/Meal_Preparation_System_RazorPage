@@ -308,3 +308,6 @@ appsettings.*.json
 *.db
 *.db-shm
 *.db-wal
+/src/Meal_Preparation_System_RazorPage/appsettings.json
+/src/Meal_Preparation_System_RazorPage/appsettings.json
+/src/Meal_Preparation_System_RazorPage/appsettings.json

@@ -9,6 +9,7 @@ namespace MealPrepService.DataAccessLayer.Repositories
     {
         Task<DailyMenu?> GetByDateAsync(DateTime date);
         Task<IEnumerable<DailyMenu>> GetWeeklyMenuAsync(DateTime startDate);
+        Task<IEnumerable<DailyMenu>> GetAllMenusAsync();
         Task<DailyMenu?> GetWithMealsAsync(Guid menuId);
     }
 }

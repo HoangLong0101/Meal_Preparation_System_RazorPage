@@ -1,0 +1,77 @@
+@page
+@model Meal_Preparation_System_RazorPage.Pages.Admin.DashboardModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="page-header">
+    <h2><i class="bi bi-speedometer2 me-2" style="color: var(--clr-primary);"></i>Admin Dashboard</h2>
+    <p class="mb-0">Overview of your meal prep business</p>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card-modern p-4 text-center">
+            <div class="stat-label"><i class="bi bi-people me-1"></i>Total Customers</div>
+            <div class="fw-bold fs-3 mt-2" style="color: var(--clr-primary);">@Model.Stats.TotalCustomers</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-modern p-4 text-center">
+            <div class="stat-label"><i class="bi bi-credit-card me-1"></i>Active Subscriptions</div>
+            <div class="fw-bold fs-3 mt-2" style="color: var(--clr-success);">@Model.Stats.ActiveSubscriptions</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-modern p-4 text-center">
+            <div class="stat-label"><i class="bi bi-clock-history me-1"></i>Pending Orders</div>
+            <div class="fw-bold fs-3 mt-2" style="color: var(--clr-warning);">@Model.Stats.PendingOrders</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card-modern p-4 text-center">
+            <div class="stat-label"><i class="bi bi-cash-stack me-1"></i>This Month Revenue</div>
+            <div class="fw-bold fs-3 mt-2" style="color: var(--clr-primary);">@Model.Stats.CurrentMonthRevenue.ToString("N0") ₫</div>
+        </div>
+    </div>
+</div>
+
+@if (Model.CurrentMonthReport != null)
+{
+    <div class="row g-4 mb-4">
+        <div class="col-md-6">
+            <div class="card-modern p-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2" style="color: var(--clr-primary);"></i>Revenue Breakdown — @DateTime.Today.ToString("MMMM yyyy")</h5>
+                <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--clr-border);">
+                    <span>Subscription Revenue</span>
+                    <span class="fw-bold">@Model.CurrentMonthReport.TotalSubscriptionRevenue.ToString("N0") ₫</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--clr-border);">
+                    <span>Order Revenue</span>
+                    <span class="fw-bold">@Model.CurrentMonthReport.TotalOrderRevenue.ToString("N0") ₫</span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center py-2">
+                    <span class="fw-bold">Total</span>
+                    <span class="fw-bold fs-5" style="color: var(--clr-primary);">@Model.CurrentMonthReport.TotalRevenue.ToString("N0") ₫</span>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card-modern p-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-lightning me-2" style="color: var(--clr-warning);"></i>Quick Actions</h5>
+                <div class="d-flex flex-column gap-2">
+                    <a asp-page="/Admin/MenuManagement" class="btn btn-outline-primary">
+                        <i class="bi bi-calendar-plus me-2"></i>Manage Today's Menu
+                    </a>
+                    <a asp-page="/Admin/Orders" class="btn btn-outline-primary">
+                        <i class="bi bi-bag-check me-2"></i>View All Orders
+                    </a>
+                    <a asp-page="/Admin/Accounts" class="btn btn-outline-primary">
+                        <i class="bi bi-people me-2"></i>Manage Staff
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+}

@@ -116,7 +116,7 @@ else
                                 </button>
                             </form>
                         }
-                        <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Delete this meal plan?');" class="ms-auto">
+                        <form method="post" asp-page-handler="Delete" data-confirm='{"title":"Delete Meal Plan?","message":"This will permanently remove this meal plan and all its meals.","icon":"bi-trash","confirmText":"Delete"}' class="ms-auto">
                             @Html.AntiForgeryToken()
                             <input type="hidden" name="planId" value="@plan.Id" />
                             <button type="submit" class="btn btn-outline-danger btn-sm">
