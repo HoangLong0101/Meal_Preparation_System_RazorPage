@@ -15,6 +15,16 @@ namespace MealPrepService.BusinessLogicLayer.DTOs
 
         public List<IngredientNutritionDto> Ingredients { get; set; } = new();
         public string Advice { get; set; } = string.Empty;
+        public string MealRating { get; set; } = string.Empty;
+        public List<MealImprovementDto> Suggestions { get; set; } = new();
+    }
+
+    public class MealImprovementDto
+    {
+        public string Ingredient { get; set; } = string.Empty;
+        public string Amount { get; set; } = string.Empty;
+        public string Reason { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
     }
 
     public class IngredientNutritionDto

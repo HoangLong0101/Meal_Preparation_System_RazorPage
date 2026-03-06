@@ -23,6 +23,8 @@ namespace Meal_Preparation_System_RazorPage.Pages.Nutrition
         public float TotalCarbsG { get; set; }
         public float TotalFatG { get; set; }
         public string Advice { get; set; } = "";
+        public string MealRating { get; set; } = "";
+        public List<SuggestionModel> Suggestions { get; set; } = new();
 
         public bool IsCalculated { get; set; }
 
@@ -44,6 +46,16 @@ namespace Meal_Preparation_System_RazorPage.Pages.Nutrition
                 TotalCarbsG = result.TotalCarbsG;
                 TotalFatG = result.TotalFatG;
                 Advice = result.Advice;
+                MealRating = result.MealRating;
+
+                Suggestions = result.Suggestions
+                    .Select(s => new SuggestionModel
+                    {
+                        Ingredient = s.Ingredient,
+                        Amount = s.Amount,
+                        Reason = s.Reason,
+                        Category = s.Category
+                    }).ToList();
 
                 IngredientResults = result.Ingredients
                     .Select(r => new IngredientResultModel
@@ -84,5 +96,13 @@ namespace Meal_Preparation_System_RazorPage.Pages.Nutrition
         public float ProteinG { get; set; }
         public float CarbsG { get; set; }
         public float FatG { get; set; }
+    }
+
+    public class SuggestionModel
+    {
+        public string Ingredient { get; set; } = "";
+        public string Amount { get; set; } = "";
+        public string Reason { get; set; } = "";
+        public string Category { get; set; } = "";
     }
 }

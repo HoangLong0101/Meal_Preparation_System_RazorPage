@@ -28,6 +28,62 @@
         font-size: 0.85rem;
         color: #888;
     }
+
+    .meal-rating {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+    .rating-excellent { background: #e8f5e9; color: #2e7d32; }
+    .rating-good { background: #e3f2fd; color: #1565c0; }
+    .rating-average { background: #fff8e1; color: #f57f17; }
+    .rating-below-average { background: #fff3e0; color: #e65100; }
+    .rating-poor { background: #fce4ec; color: #c62828; }
+
+    .suggestion-card {
+        border: 1px solid #f0f0f0;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        transition: box-shadow 0.2s;
+    }
+    .suggestion-card:hover {
+        box-shadow: 0 2px 12px rgba(255,107,53,0.12);
+    }
+    .suggestion-ingredient {
+        font-weight: 700;
+        color: #333;
+        font-size: 0.95rem;
+    }
+    .suggestion-amount {
+        font-size: 0.82rem;
+        color: #ff6b35;
+        font-weight: 600;
+    }
+    .suggestion-reason {
+        font-size: 0.82rem;
+        color: #666;
+        margin-top: 4px;
+    }
+    .category-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .cat-protein { background: #fce4ec; color: #c62828; }
+    .cat-vegetable { background: #e8f5e9; color: #2e7d32; }
+    .cat-grain { background: #fff8e1; color: #f57f17; }
+    .cat-fruit { background: #f3e5f5; color: #7b1fa2; }
+    .cat-dairy { background: #e3f2fd; color: #1565c0; }
+    .cat-healthy-fat { background: #fff3e0; color: #e65100; }
+    .cat-fiber { background: #e0f2f1; color: #00695c; }
 </style>
 
 <div class="nutrition-header text-center mb-4">
@@ -156,6 +212,31 @@
 
                 @if (Model.IsCalculated)
                 {
+                    @if (!string.IsNullOrEmpty(Model.MealRating))
+                    {
+                        var ratingClass = Model.MealRating.ToLower() switch
+                        {
+                            "excellent" => "rating-excellent",
+                            "good" => "rating-good",
+                            "average" => "rating-average",
+                            "below average" => "rating-below-average",
+                            _ => "rating-poor"
+                        };
+                        var ratingIcon = Model.MealRating.ToLower() switch
+                        {
+                            "excellent" => "bi-star-fill",
+                            "good" => "bi-hand-thumbs-up-fill",
+                            "average" => "bi-dash-circle",
+                            "below average" => "bi-exclamation-triangle",
+                            _ => "bi-x-circle"
+                        };
+                        <div class="mb-3 text-center">
+                            <span class="meal-rating @ratingClass">
+                                <i class="bi @ratingIcon"></i> @Model.MealRating Meal
+                            </span>
+                        </div>
+                    }
+
                     <ul class="list-group mb-3">
                         @foreach (var r in Model.IngredientResults)
                         {
@@ -174,6 +255,39 @@
                     <div class="p-3 bg-light" style="border-radius:8px; white-space:pre-wrap;">
                         @Model.Advice
                     </div>
+
+                    @if (Model.Suggestions.Any())
+                    {
+                        <hr />
+                        <h6 class="mb-3" style="font-weight: 700;">
+                            <i class="bi bi-lightbulb-fill me-1" style="color: #ff6b35;"></i>
+                            Add These to Complete Your Meal
+                        </h6>
+                        @foreach (var s in Model.Suggestions)
+                        {
+                            var catClass = s.Category.ToLower().Replace(" ", "-") switch
+                            {
+                                "protein" => "cat-protein",
+                                "vegetable" => "cat-vegetable",
+                                "grain" => "cat-grain",
+                                "fruit" => "cat-fruit",
+                                "dairy" => "cat-dairy",
+                                "healthy-fat" => "cat-healthy-fat",
+                                "fiber" => "cat-fiber",
+                                _ => "cat-vegetable"
+                            };
+                            <div class="suggestion-card">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <span class="suggestion-ingredient">@s.Ingredient</span>
+                                    <span class="suggestion-amount">@s.Amount</span>
+                                </div>
+                                <div>
+                                    <span class="category-badge @catClass">@s.Category</span>
+                                </div>
+                                <div class="suggestion-reason">@s.Reason</div>
+                            </div>
+                        }
+                    }
                 }
                 else
                 {

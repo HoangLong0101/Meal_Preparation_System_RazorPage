@@ -68,7 +68,15 @@ namespace MealPrepService.BusinessLogicLayer.Services
         {
             var sb = new StringBuilder();
 
-            sb.AppendLine("You are a nutrition calculator. Analyze the following ingredients and return ONLY valid JSON matching this exact schema:");
+            sb.AppendLine("You are a professional nutrition analyst. Analyze the following ingredients and:");
+            sb.AppendLine("1. Calculate detailed nutrition for each ingredient");
+            sb.AppendLine("2. Rate the overall meal quality (Poor / Below Average / Average / Good / Excellent)");
+            sb.AppendLine("3. Suggest 2-5 ingredients the user should ADD to make this a complete, balanced meal");
+            sb.AppendLine("   - Focus on missing macronutrients (protein, carbs, fat, fiber)");
+            sb.AppendLine("   - Consider missing food groups (vegetables, grains, protein source, healthy fats)");
+            sb.AppendLine("   - Each suggestion must include a category: Protein, Vegetable, Grain, Fruit, Dairy, Healthy Fat, or Fiber");
+            sb.AppendLine();
+            sb.AppendLine("Return ONLY valid JSON matching this exact schema:");
             sb.AppendLine("""
         {
           "ingredients": [
@@ -88,7 +96,16 @@ namespace MealPrepService.BusinessLogicLayer.Services
             "carbs_g": 25.0,
             "fat_g": 5.0
           },
-          "advice": "Brief nutrition advice based on the ingredients"
+          "meal_rating": "Good",
+          "suggestions": [
+            {
+              "ingredient": "broccoli",
+              "amount": "150g",
+              "reason": "Adds fiber, vitamin C, and micronutrients missing from main protein",
+              "category": "Vegetable"
+            }
+          ],
+          "advice": "Brief overall nutrition advice about the meal and suggestions"
         }
         """);
 
@@ -142,6 +159,24 @@ namespace MealPrepService.BusinessLogicLayer.Services
             result.Advice = jsonDoc.RootElement.TryGetProperty("advice", out var adviceProp)
                 ? adviceProp.GetString() ?? ""
                 : "";
+
+            result.MealRating = jsonDoc.RootElement.TryGetProperty("meal_rating", out var ratingProp)
+                ? ratingProp.GetString() ?? ""
+                : "";
+
+            if (jsonDoc.RootElement.TryGetProperty("suggestions", out var suggestionsArr))
+            {
+                foreach (var sug in suggestionsArr.EnumerateArray())
+                {
+                    result.Suggestions.Add(new MealImprovementDto
+                    {
+                        Ingredient = sug.TryGetProperty("ingredient", out var ing) ? ing.GetString() ?? "" : "",
+                        Amount = sug.TryGetProperty("amount", out var amt) ? amt.GetString() ?? "" : "",
+                        Reason = sug.TryGetProperty("reason", out var rsn) ? rsn.GetString() ?? "" : "",
+                        Category = sug.TryGetProperty("category", out var cat) ? cat.GetString() ?? "" : ""
+                    });
+                }
+            }
 
             if (jsonDoc.RootElement.TryGetProperty("ingredients", out var ingredientsArr))
             {
