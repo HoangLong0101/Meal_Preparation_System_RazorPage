@@ -55,6 +55,13 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
         public bool PrioritizeHealthy { get; set; } = false;
 
         [BindProperty]
+        [Range(1, 20, ErrorMessage = "Number of people must be between 1 and 20")]
+        public int NumberOfPeople { get; set; } = 1;
+
+        [BindProperty]
+        public List<FamilyMemberInfo> FamilyMembers { get; set; } = new();
+
+        [BindProperty]
         [Required(ErrorMessage = "Please select a serve date")]
         [DataType(DataType.Date)]
         public DateTime ServeDate { get; set; } = DateTime.Today;
@@ -152,7 +159,9 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
                     Budget = Budget,
                     AvailableTime = AvailableTime,
                     SpecificRequest = SpecificRequest,
-                    PrioritizeHealthy = PrioritizeHealthy
+                    PrioritizeHealthy = PrioritizeHealthy,
+                    NumberOfPeople = NumberOfPeople,
+                    FamilyMembers = FamilyMembers?.Where(fm => !string.IsNullOrWhiteSpace(fm.Role)).ToList() ?? new()
                 };
 
                 // Get available recipes from database

@@ -184,6 +184,101 @@
         border-color: #4caf50;
     }
 
+    .family-member-row {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+
+    .family-member-row select,
+    .family-member-row input {
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .family-member-row select:focus,
+    .family-member-row input:focus {
+        border-color: #ff6b35;
+        box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.1);
+    }
+
+    .family-member-row .btn-remove-member {
+        background: none;
+        border: 2px solid #e0e0e0;
+        border-radius: 10px;
+        padding: 10px 12px;
+        color: #dc3545;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+
+    .family-member-row .btn-remove-member:hover {
+        border-color: #dc3545;
+        background: #fff5f5;
+    }
+
+    .btn-add-member {
+        background: none;
+        border: 2px dashed #e0e0e0;
+        border-radius: 10px;
+        padding: 10px 16px;
+        color: #ff6b35;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        width: 100%;
+    }
+
+    .btn-add-member:hover {
+        border-color: #ff6b35;
+        background: #fff5f2;
+    }
+
+    .people-counter {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
+    .people-counter button {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 2px solid #e0e0e0;
+        background: white;
+        font-size: 18px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #333;
+    }
+
+    .people-counter button:hover {
+        border-color: #ff6b35;
+        color: #ff6b35;
+        background: #fff5f2;
+    }
+
+    .people-counter .count-display {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #ff6b35;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    .people-counter-label {
+        color: #888;
+        font-size: 14px;
+    }
+
     .btn-submit {
         background: linear-gradient(135deg, #ff6b35, #ff8c5a);
         border: none;
@@ -403,6 +498,62 @@
                     </div>
                 </div>
 
+                <!-- Number of People -->
+                <div class="form-section">
+                    <div class="form-section-label">
+                        <i class="bi bi-people-fill"></i>
+                        <span>How many people?</span>
+                    </div>
+                    <div class="people-counter">
+                        <button type="button" id="decreasePeople" onclick="changePeopleCount(-1)">−</button>
+                        <span class="count-display" id="peopleCountDisplay">@Model.NumberOfPeople</span>
+                        <button type="button" id="increasePeople" onclick="changePeopleCount(1)">+</button>
+                        <span class="people-counter-label">person(s)</span>
+                    </div>
+                    <input type="hidden" asp-for="NumberOfPeople" id="numberOfPeopleInput" />
+                </div>
+
+                <!-- Family Members -->
+                <div class="form-section" id="familySection" style="display: @(Model.NumberOfPeople > 1 ? "block" : "none");">
+                    <div class="form-section-label">
+                        <i class="bi bi-person-hearts"></i>
+                        <span>Who are you cooking for?</span>
+                    </div>
+                    <p style="font-size: 13px; color: #888; margin-bottom: 14px;">
+                        Add family members so AI can suggest meals suitable for everyone
+                    </p>
+                    <div id="familyMembersContainer">
+                        @if (Model.FamilyMembers != null)
+                        {
+                            for (int i = 0; i < Model.FamilyMembers.Count; i++)
+                            {
+                                <div class="family-member-row">
+                                    <select name="FamilyMembers[@i].Role" class="flex-grow-1">
+                                        <!option value="">-- Select role --</!option>
+                                        <!option value="Father" @(Model.FamilyMembers[i].Role == "Father" ? "selected" : "")>👨 Father</!option>
+                                        <!option value="Mother" @(Model.FamilyMembers[i].Role == "Mother" ? "selected" : "")>👩 Mother</!option>
+                                        <!option value="Son" @(Model.FamilyMembers[i].Role == "Son" ? "selected" : "")>👦 Son</!option>
+                                        <!option value="Daughter" @(Model.FamilyMembers[i].Role == "Daughter" ? "selected" : "")>👧 Daughter</!option>
+                                        <!option value="Toddler (1-3 years)" @(Model.FamilyMembers[i].Role == "Toddler (1-3 years)" ? "selected" : "")>👶 Toddler (1-3 yrs)</!option>
+                                        <!option value="Child (4-12 years)" @(Model.FamilyMembers[i].Role == "Child (4-12 years)" ? "selected" : "")>🧒 Child (4-12 yrs)</!option>
+                                        <!option value="Teenager" @(Model.FamilyMembers[i].Role == "Teenager" ? "selected" : "")>🧑 Teenager</!option>
+                                        <!option value="Elderly" @(Model.FamilyMembers[i].Role == "Elderly" ? "selected" : "")>🧓 Elderly</!option>
+                                        <!option value="Pregnant" @(Model.FamilyMembers[i].Role == "Pregnant" ? "selected" : "")>🤰 Pregnant</!option>
+                                    </select>
+                                    <input type="text" name="FamilyMembers[@i].Note" placeholder="Notes (e.g. diabetic, vegetarian)"
+                                           value="@Model.FamilyMembers[i].Note" style="flex: 1;" />
+                                    <button type="button" class="btn-remove-member" onclick="removeFamilyMember(this)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            }
+                        }
+                    </div>
+                    <button type="button" class="btn-add-member" onclick="addFamilyMember()">
+                        <i class="bi bi-plus-lg me-1"></i> Add family member
+                    </button>
+                </div>
+
                 <!-- Submit Button -->
                 <button type="submit" class="btn-submit" id="submitBtn">
                     <i class="bi bi-stars"></i>
@@ -430,12 +581,7 @@
         // Update hint based on preparation method
         document.querySelectorAll('input[name="PreparationMethod"]').forEach(radio => {
             radio.addEventListener('change', function() {
-                const hint = document.getElementById('suggestionHint');
-                if (this.value === 'Cooking') {
-                    hint.innerHTML = '<i class="bi bi-info-circle me-1"></i> AI will suggest <strong>2 meals</strong> suitable for you';
-                } else {
-                    hint.innerHTML = '<i class="bi bi-info-circle me-1"></i> AI will suggest <strong>1 meal</strong> suitable for you';
-                }
+                updateHint();
             });
         });
 
@@ -444,5 +590,71 @@
             document.getElementById('loadingOverlay').classList.add('active');
             document.getElementById('submitBtn').disabled = true;
         });
+
+        // People counter
+        function changePeopleCount(delta) {
+            var input = document.getElementById('numberOfPeopleInput');
+            var display = document.getElementById('peopleCountDisplay');
+            var current = parseInt(input.value) || 1;
+            var newVal = Math.max(1, Math.min(20, current + delta));
+            input.value = newVal;
+            display.textContent = newVal;
+
+            var familySection = document.getElementById('familySection');
+            if (newVal > 1) {
+                familySection.style.display = 'block';
+            } else {
+                familySection.style.display = 'none';
+            }
+
+            // Update hint
+            updateHint();
+        }
+
+        function updateHint() {
+            var hint = document.getElementById('suggestionHint');
+            var people = parseInt(document.getElementById('numberOfPeopleInput').value) || 1;
+            var method = document.querySelector('input[name="PreparationMethod"]:checked');
+            var methodVal = method ? method.value : 'Cooking';
+            var mealCount = methodVal === 'Cooking' ? 2 : 1;
+            var peopleText = people > 1 ? ' for <strong>' + people + ' people</strong>' : '';
+            hint.innerHTML = '<i class="bi bi-info-circle me-1"></i> AI will suggest <strong>' + mealCount + ' meal(s)</strong>' + peopleText + ' suitable for you';
+        }
+
+        // Family members
+        function addFamilyMember() {
+            var container = document.getElementById('familyMembersContainer');
+            var index = container.querySelectorAll('.family-member-row').length;
+            var row = document.createElement('div');
+            row.className = 'family-member-row';
+            row.innerHTML = `
+                <select name="FamilyMembers[${index}].Role" class="flex-grow-1">
+                    <option value="">-- Select role --</option>
+                    <option value="Father">👨 Father</option>
+                    <option value="Mother">👩 Mother</option>
+                    <option value="Son">👦 Son</option>
+                    <option value="Daughter">👧 Daughter</option>
+                    <option value="Toddler (1-3 years)">👶 Toddler (1-3 yrs)</option>
+                    <option value="Child (4-12 years)">🧒 Child (4-12 yrs)</option>
+                    <option value="Teenager">🧑 Teenager</option>
+                    <option value="Elderly">🧓 Elderly</option>
+                    <option value="Pregnant">🤰 Pregnant</option>
+                </select>
+                <input type="text" name="FamilyMembers[${index}].Note" placeholder="Notes (e.g. diabetic, vegetarian)" style="flex: 1;" />
+                <button type="button" class="btn-remove-member" onclick="removeFamilyMember(this)">
+                    <i class="bi bi-trash"></i>
+                </button>`;
+            container.appendChild(row);
+        }
+
+        function removeFamilyMember(btn) {
+            btn.closest('.family-member-row').remove();
+            // Reindex
+            var rows = document.querySelectorAll('#familyMembersContainer .family-member-row');
+            rows.forEach(function(row, i) {
+                row.querySelector('select').name = 'FamilyMembers[' + i + '].Role';
+                row.querySelector('input[type="text"]').name = 'FamilyMembers[' + i + '].Note';
+            });
+        }
     </script>
 }

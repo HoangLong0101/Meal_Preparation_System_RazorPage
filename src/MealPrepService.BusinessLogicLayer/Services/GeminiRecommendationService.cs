@@ -670,6 +670,17 @@ namespace MealPrepService.BusinessLogicLayer.Services
                     promptBuilder.AppendLine($"- Specific request: {request.SpecificRequest}");
                 if (request.PrioritizeHealthy)
                     promptBuilder.AppendLine("- Prioritize healthy options");
+                if (request.NumberOfPeople > 1)
+                    promptBuilder.AppendLine($"- Number of people: {request.NumberOfPeople}");
+                if (request.FamilyMembers?.Any() == true)
+                {
+                    promptBuilder.AppendLine("- Family members:");
+                    foreach (var member in request.FamilyMembers)
+                    {
+                        var note = string.IsNullOrWhiteSpace(member.Note) ? "" : $" ({member.Note})";
+                        promptBuilder.AppendLine($"  • {member.Role}{note}");
+                    }
+                }
 
                 promptBuilder.AppendLine();
                 
@@ -690,7 +701,17 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 }
 
                 promptBuilder.AppendLine("TASK:");
-                promptBuilder.AppendLine("Suggest EXACTLY 2 suitable meals with COMPLETE ingredient lists.");
+                if (request.NumberOfPeople > 1)
+                {
+                    promptBuilder.AppendLine($"Suggest EXACTLY 2 suitable meals for {request.NumberOfPeople} people with COMPLETE ingredient lists.");
+                    promptBuilder.AppendLine($"Scale ingredient quantities for {request.NumberOfPeople} servings.");
+                    if (request.FamilyMembers?.Any() == true)
+                        promptBuilder.AppendLine("Consider ALL family members' dietary needs, ages, and health conditions when suggesting meals.");
+                }
+                else
+                {
+                    promptBuilder.AppendLine("Suggest EXACTLY 2 suitable meals with COMPLETE ingredient lists.");
+                }
                 promptBuilder.AppendLine();
                 promptBuilder.AppendLine("RETURN JSON IN THIS FORMAT:");
                 promptBuilder.AppendLine("{\"overallReasoning\":\"brief reason\",\"suggestions\":[{\"recipeId\":null,\"mealName\":\"Meal Name\",\"description\":\"10-word description\",\"estimatedCalories\":500,\"estimatedPrice\":50000,\"prepTime\":30,\"reasoning\":\"Brief reason\",\"isFromDatabase\":false,\"proteinG\":25,\"carbsG\":45,\"fatG\":15,\"instructions\":\"Step 1... Step 2...\",\"ingredients\":[{\"name\":\"ingredient\",\"quantity\":200,\"unit\":\"g\"}]}]}");

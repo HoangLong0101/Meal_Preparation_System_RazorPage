@@ -79,6 +79,14 @@ namespace MealPrepService.BusinessLogicLayer.Interfaces
         public int? AvailableTime { get; set; } // in minutes
         public string? SpecificRequest { get; set; }
         public bool PrioritizeHealthy { get; set; }
+        public int NumberOfPeople { get; set; } = 1;
+        public List<FamilyMemberInfo> FamilyMembers { get; set; } = new();
+    }
+
+    public class FamilyMemberInfo
+    {
+        public string Role { get; set; } = string.Empty; // e.g. "Father", "Mother", "Child (5 years)", "Elderly"
+        public string? Note { get; set; } // e.g. "Diabetic", "Vegetarian", "Allergic to shrimp"
     }
 
     public class DailyMealSuggestionResponse
