@@ -57,13 +57,14 @@
                             <small class="text-muted"><i class="bi bi-box me-1"></i>@Model.SelectedMeal.AvailableQuantity available</small>
                         </div>
 
-                        <div class="mb-4">
+                        <div class="mb-4 position-relative">
                             <label class="form-label fw-semibold">Delivery Address</label>
                             <div class="input-group input-group-order">
                                 <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
-                                <input asp-for="DeliveryAddress" class="form-control" placeholder="Enter delivery address" required />
+                                <input asp-for="DeliveryAddress" class="form-control" placeholder="Enter delivery address" autocomplete="off" required />
                             </div>
-                            <small class="text-muted"><i class="bi bi-pin-map me-1"></i>Type to search and select an address from Google Maps suggestions</small>
+                            <div id="addressSuggestions" class="suggestions-dropdown position-absolute" style="display:none; top:100%; left:0; right:0; background:white; border:1px solid #e0e0e0; border-radius:8px; max-height:300px; overflow-y:auto; z-index:1000; margin-top:4px;"></div>
+                            <small class="text-muted"><i class="bi bi-pin-map me-1"></i>Type to search addresses (powered by OpenStreetMap)</small>
                             <small id="mapsStatus" class="text-muted d-block mt-1"></small>
                         </div>
 
@@ -103,59 +104,100 @@
 
 @section Scripts {
     <script>
+        let nominatimTimeout;
+        const NOMINATIM_API = 'https://nominatim.openstreetmap.org/search';
+
         function setMapsStatus(message, isError) {
             const status = document.getElementById('mapsStatus');
-            if (!status) {
-                return;
-            }
-
+            if (!status) return;
             status.classList.remove('text-muted', 'text-danger');
             status.classList.add(isError ? 'text-danger' : 'text-muted');
             status.textContent = message;
         }
 
-        function initDeliveryAutocomplete() {
-            const input = document.getElementById('DeliveryAddress');
-            if (!input || typeof google === 'undefined' || !google.maps || !google.maps.places) {
-                setMapsStatus('Google Maps is not available. You can still enter address manually.', true);
+        function hideSuggestions() {
+            const dropdown = document.getElementById('addressSuggestions');
+            if (dropdown) dropdown.style.display = 'none';
+        }
+
+        function showSuggestions(suggestions) {
+            const dropdown = document.getElementById('addressSuggestions');
+            if (!dropdown) return;
+            
+            if (suggestions.length === 0) {
+                dropdown.style.display = 'none';
                 return;
             }
 
-            const autocomplete = new google.maps.places.Autocomplete(input, {
-                types: ['address'],
-                componentRestrictions: { country: ['vn'] },
-                fields: ['formatted_address', 'name']
+            dropdown.innerHTML = suggestions.map((item, idx) => `
+                <div class="suggestion-item p-2 border-bottom cursor-pointer" style="cursor:pointer; padding:8px 12px;" data-address="${item.display_name}" onmouseover="this.style.backgroundColor='#f5f5f5'" onmouseout="this.style.backgroundColor='white'">
+                    <small><strong>${item.display_name.substring(0, 60)}</strong></small>
+                    ${item.display_name.length > 60 ? `<small class="text-muted">...</small>` : ''}
+                </div>
+            `).join('');
+            
+            dropdown.style.display = 'block';
+            
+            dropdown.querySelectorAll('.suggestion-item').forEach(item => {
+                item.addEventListener('click', function () {
+                    const input = document.getElementById('DeliveryAddress');
+                    if (input) {
+                        input.value = this.getAttribute('data-address');
+                        input.focus();
+                    }
+                    hideSuggestions();
+                });
+            });
+        }
+
+        function searchNominatim(query) {
+            if (!query || query.length < 3) {
+                hideSuggestions();
+                return;
+            }
+
+            fetch(`${NOMINATIM_API}?q=${encodeURIComponent(query)}&countrycodes=vn&format=json&addressdetails=1&limit=8`)
+                .then(resp => resp.json())
+                .then(data => {
+                    showSuggestions(data || []);
+                    if (data && data.length > 0) {
+                        setMapsStatus('Address suggestions ready', false);
+                    } else if (query.length >= 3) {
+                        setMapsStatus('No addresses found', false);
+                    }
+                })
+                .catch(err => {
+                    console.error('Nominatim error:', err);
+                    setMapsStatus('Cannot load suggestions. Enter address manually.', true);
+                });
+        }
+
+        function initDeliveryAutocomplete() {
+            const input = document.getElementById('DeliveryAddress');
+            if (!input) return;
+
+            input.addEventListener('input', function () {
+                clearTimeout(nominatimTimeout);
+                nominatimTimeout = setTimeout(() => {
+                    searchNominatim(this.value);
+                }, 300);
             });
 
-            autocomplete.addListener('place_changed', function () {
-                const place = autocomplete.getPlace();
-                if (place && place.formatted_address) {
-                    input.value = place.formatted_address;
-                } else if (place && place.name) {
-                    input.value = place.name;
+            input.addEventListener('focus', function () {
+                if (this.value && this.value.length >= 3) {
+                    searchNominatim(this.value);
                 }
             });
 
-            setMapsStatus('Address suggestions are ready.', false);
+            document.addEventListener('click', function (e) {
+                if (!e.target.closest('#DeliveryAddress') && !e.target.closest('#addressSuggestions')) {
+                    hideSuggestions();
+                }
+            });
+
+            setMapsStatus('Address suggestions ready (OpenStreetMap)', false);
         }
 
-        function initDeliveryAutocompleteError() {
-            setMapsStatus('Cannot load Google Maps suggestions. Check API key, enabled APIs, and billing for this project.', true);
-        }
-
-        window.gm_authFailure = function () {
-            setMapsStatus('Google Maps authorization failed. Check API key restrictions and billing.', true);
-        };
+        document.addEventListener('DOMContentLoaded', initDeliveryAutocomplete);
     </script>
-
-    @if (!string.IsNullOrWhiteSpace(Model.GoogleMapsApiKey))
-    {
-        <script async defer src="https://maps.googleapis.com/maps/api/js?key=@Model.GoogleMapsApiKey&libraries=places&callback=initDeliveryAutocomplete" onerror="initDeliveryAutocompleteError()"></script>
-    }
-    else
-    {
-        <script>
-            setMapsStatus('Google Maps API key is missing. You can still enter address manually.', true);
-        </script>
-    }
 }
