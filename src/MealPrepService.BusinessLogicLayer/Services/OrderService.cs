@@ -149,21 +149,11 @@ namespace MealPrepService.BusinessLogicLayer.Services
 
                 if (paymentMethod == "COD")
                 {
-                    // For Cash on Delivery, set status to pending_payment and create delivery schedule
+                    // For Cash on Delivery, set status to pending_payment.
+                    // Delivery schedule is created from presentation layer where customer delivery info is available.
                     order.Status = "pending_payment";
-                    
-                    // Create delivery schedule immediately for COD orders
-                    var deliveryDto = new DeliveryScheduleDto
-                    {
-                        OrderId = orderId,
-                        DeliveryTime = DateTime.UtcNow.AddDays(1),
-                        Address = "Customer address", // Should come from customer profile or order data
-                        DriverContact = "TBD"
-                    };
-                    
-                    await _deliveryService.CreateDeliveryScheduleAsync(orderId, deliveryDto);
-                    
-                    _logger.LogInformation("COD order {OrderId} set to pending_payment with delivery schedule created", orderId);
+
+                    _logger.LogInformation("COD order {OrderId} set to pending_payment", orderId);
                 }
                 else if (paymentMethod == "VNPAY")
                 {
@@ -252,18 +242,7 @@ namespace MealPrepService.BusinessLogicLayer.Services
                     order.VnpayTransactionId = callbackResult.TransactionId;
                     order.PaymentConfirmedAt = DateTime.UtcNow;
                     order.UpdatedAt = DateTime.UtcNow;
-                    
-                    // Create delivery schedule for successful payment
-                    var deliveryDto = new DeliveryScheduleDto
-                    {
-                        OrderId = order.Id,
-                        DeliveryTime = DateTime.UtcNow.AddDays(1),
-                        Address = "Customer address", // Should come from customer profile
-                        DriverContact = "TBD"
-                    };
-                    
-                    await _deliveryService.CreateDeliveryScheduleAsync(order.Id, deliveryDto);
-                    
+
                     _logger.LogInformation("VNPAY payment successful for order {OrderId}, transaction {TransactionId}", 
                         order.Id, callbackResult.TransactionId);
                 }

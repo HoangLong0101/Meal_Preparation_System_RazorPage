@@ -43,7 +43,7 @@
                         <div class="price mt-2">@Model.SelectedMeal.Price.ToString("N0") ₫ <span class="text-muted small fw-normal">each</span></div>
                     </div>
 
-                    <form method="post" data-confirm='{"title":"Confirm Order?","message":"Your order will be placed and confirmed immediately.","icon":"bi-bag-check","confirmText":"Place Order","cancelText":"Go Back"}'>
+                    <form method="post" data-confirm='{"title":"Confirm Order?","message":"Your order will be created and payment flow will start.","icon":"bi-bag-check","confirmText":"Continue","cancelText":"Go Back"}'>
                         @Html.AntiForgeryToken()
                         <input type="hidden" asp-for="MenuMealId" />
 
@@ -58,15 +58,41 @@
                         </div>
 
                         <div class="mb-4">
+                            <label class="form-label fw-semibold">Delivery Address</label>
+                            <div class="input-group input-group-order">
+                                <span class="input-group-text"><i class="bi bi-geo-alt"></i></span>
+                                <input asp-for="DeliveryAddress" class="form-control" placeholder="Enter delivery address" required />
+                            </div>
+                            <small class="text-muted"><i class="bi bi-pin-map me-1"></i>Type to search and select an address from Google Maps suggestions</small>
+                            <small id="mapsStatus" class="text-muted d-block mt-1"></small>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Preferred Delivery Time</label>
+                            <div class="input-group input-group-order">
+                                <span class="input-group-text"><i class="bi bi-clock"></i></span>
+                                <input asp-for="DeliveryTime" class="form-control" type="datetime-local" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label fw-semibold">Driver Contact (Optional)</label>
+                            <div class="input-group input-group-order">
+                                <span class="input-group-text"><i class="bi bi-telephone"></i></span>
+                                <input asp-for="DriverContact" class="form-control" placeholder="Optional note for delivery contact" />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
                             <label class="form-label fw-semibold">Payment Method</label>
                             <select asp-for="PaymentMethod" class="form-select form-control-modern">
-                                <option value="Cash"><i class="bi bi-cash"></i> Cash</option>
-                                <option value="VnPay">VnPay</option>
+                                <option value="COD">Cash on Delivery (COD)</option>
+                                <option value="VNPAY">VNPAY</option>
                             </select>
                         </div>
 
                         <button type="submit" class="btn btn-order w-100">
-                            <i class="bi bi-check-lg me-1"></i> Confirm Order
+                            <i class="bi bi-check-lg me-1"></i> Place Order
                         </button>
                     </form>
                 }
@@ -74,3 +100,62 @@
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        function setMapsStatus(message, isError) {
+            const status = document.getElementById('mapsStatus');
+            if (!status) {
+                return;
+            }
+
+            status.classList.remove('text-muted', 'text-danger');
+            status.classList.add(isError ? 'text-danger' : 'text-muted');
+            status.textContent = message;
+        }
+
+        function initDeliveryAutocomplete() {
+            const input = document.getElementById('DeliveryAddress');
+            if (!input || typeof google === 'undefined' || !google.maps || !google.maps.places) {
+                setMapsStatus('Google Maps is not available. You can still enter address manually.', true);
+                return;
+            }
+
+            const autocomplete = new google.maps.places.Autocomplete(input, {
+                types: ['address'],
+                componentRestrictions: { country: ['vn'] },
+                fields: ['formatted_address', 'name']
+            });
+
+            autocomplete.addListener('place_changed', function () {
+                const place = autocomplete.getPlace();
+                if (place && place.formatted_address) {
+                    input.value = place.formatted_address;
+                } else if (place && place.name) {
+                    input.value = place.name;
+                }
+            });
+
+            setMapsStatus('Address suggestions are ready.', false);
+        }
+
+        function initDeliveryAutocompleteError() {
+            setMapsStatus('Cannot load Google Maps suggestions. Check API key, enabled APIs, and billing for this project.', true);
+        }
+
+        window.gm_authFailure = function () {
+            setMapsStatus('Google Maps authorization failed. Check API key restrictions and billing.', true);
+        };
+    </script>
+
+    @if (!string.IsNullOrWhiteSpace(Model.GoogleMapsApiKey))
+    {
+        <script async defer src="https://maps.googleapis.com/maps/api/js?key=@Model.GoogleMapsApiKey&libraries=places&callback=initDeliveryAutocomplete" onerror="initDeliveryAutocompleteError()"></script>
+    }
+    else
+    {
+        <script>
+            setMapsStatus('Google Maps API key is missing. You can still enter address manually.', true);
+        </script>
+    }
+}

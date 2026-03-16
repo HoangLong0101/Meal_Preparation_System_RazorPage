@@ -4,6 +4,8 @@ using MealPrepService.BusinessLogicLayer.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
 namespace Meal_Preparation_System_RazorPage.Pages.Orders
 {
@@ -11,16 +13,29 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
     {
         private readonly IOrderService _orderService;
         private readonly IMenuService _menuService;
+        private readonly IVnpayService _vnpayService;
+        private readonly IDeliveryService _deliveryService;
         private readonly IHubContext<MealPrepHub> _hubContext;
+        private readonly string _googleMapsApiKey;
 
-        public CreateModel(IOrderService orderService, IMenuService menuService, IHubContext<MealPrepHub> hubContext)
+        public CreateModel(
+            IOrderService orderService,
+            IMenuService menuService,
+            IVnpayService vnpayService,
+            IDeliveryService deliveryService,
+            IConfiguration configuration,
+            IHubContext<MealPrepHub> hubContext)
         {
             _orderService = orderService;
             _menuService = menuService;
+            _vnpayService = vnpayService;
+            _deliveryService = deliveryService;
+            _googleMapsApiKey = configuration["GoogleMaps:ApiKey"] ?? string.Empty;
             _hubContext = hubContext;
         }
 
         public MenuMealDto? SelectedMeal { get; set; }
+        public string GoogleMapsApiKey => _googleMapsApiKey;
 
         [BindProperty]
         public Guid MenuMealId { get; set; }
@@ -29,7 +44,16 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
         public int Quantity { get; set; } = 1;
 
         [BindProperty]
-        public string PaymentMethod { get; set; } = "Cash";
+        public string PaymentMethod { get; set; } = "COD";
+
+        [BindProperty]
+        public string DeliveryAddress { get; set; } = string.Empty;
+
+        [BindProperty]
+        public DateTime DeliveryTime { get; set; }
+
+        [BindProperty]
+        public string DriverContact { get; set; } = "TBD";
 
         public async Task<IActionResult> OnGetAsync(Guid menuMealId)
         {
@@ -47,6 +71,7 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
             }
 
             MenuMealId = menuMealId;
+            DeliveryTime = DateTime.Today.AddDays(1).AddHours(11);
             return Page();
         }
 
@@ -58,43 +83,107 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
 
             try
             {
+                if (string.IsNullOrWhiteSpace(DeliveryAddress))
+                {
+                    throw new InvalidOperationException("Delivery address is required.");
+                }
+
                 var items = new List<OrderItemDto>
                 {
                     new() { MenuMealId = MenuMealId, Quantity = Quantity }
                 };
 
                 var order = await _orderService.CreateOrderAsync(Guid.Parse(accountIdStr), items);
+                var normalizedPaymentMethod = PaymentMethod.Equals("VNPAY", StringComparison.OrdinalIgnoreCase)
+                    ? "VNPAY"
+                    : "COD";
 
-                // Skip payment — auto-confirm the order
-                await _orderService.UpdateOrderStatusAsync(order.Id, "confirmed");
-                var confirmedOrder = await _orderService.GetByIdAsync(order.Id);
+                await _orderService.ProcessPaymentAsync(order.Id, normalizedPaymentMethod);
 
-                // Notify all menu viewers about the quantity change
-                var updatedMeal = await _menuService.GetMenuMealAsync(MenuMealId);
-                if (updatedMeal != null)
+                var deliveryDto = new DeliveryScheduleDto
                 {
-                    var updateType = updatedMeal.IsSoldOut ? "SoldOut" : "QuantityChanged";
-                    var detail = updatedMeal.IsSoldOut ? "0" : $"{updatedMeal.AvailableQuantity}";
-                    await _hubContext.Clients.Group("menu")
-                        .SendAsync("MenuMealQuantityChanged", updatedMeal.RecipeName, updatedMeal.AvailableQuantity, updatedMeal.IsSoldOut);
+                    OrderId = order.Id,
+                    DeliveryTime = ToUtc(DeliveryTime),
+                    Address = DeliveryAddress,
+                    DriverContact = string.IsNullOrWhiteSpace(DriverContact) ? "TBD" : DriverContact
+                };
+
+                if (normalizedPaymentMethod == "COD")
+                {
+                    await _deliveryService.CreateDeliveryScheduleAsync(order.Id, deliveryDto);
+                    var latestOrder = await _orderService.GetByIdAsync(order.Id);
+
+                    await NotifyMenuMealChangedAsync(MenuMealId);
+                    await NotifyOrderPlacedAsync(latestOrder);
+
+                    TempData["SuccessMessage"] = "Order placed successfully. Please pay when receiving your meal.";
+                    return RedirectToPage("/Orders/Details", new { id = latestOrder.Id });
                 }
 
-                // Notify admin that a new order was placed
-                await _hubContext.Clients.Group("admin")
-                    .SendAsync("NewOrderPlaced", confirmedOrder.Id.ToString(),
-                        confirmedOrder.OrderDate.ToString("MMM dd, yyyy HH:mm"),
-                        confirmedOrder.TotalAmount.ToString("N0"),
-                        confirmedOrder.Status,
-                        confirmedOrder.OrderDetails.Count);
+                var pendingDelivery = new PendingDeliveryInfo
+                {
+                    Address = deliveryDto.Address,
+                    DeliveryTimeUtc = deliveryDto.DeliveryTime,
+                    DriverContact = deliveryDto.DriverContact
+                };
 
-                TempData["SuccessMessage"] = "Order placed and confirmed!";
-                return RedirectToPage("/Orders/Details", new { id = confirmedOrder.Id });
+                HttpContext.Session.SetString(
+                    GetPendingDeliveryKey(order.Id),
+                    JsonSerializer.Serialize(pendingDelivery));
+
+                var paymentUrl = await _vnpayService.CreatePaymentUrlAsync(
+                    order.Id,
+                    order.TotalAmount,
+                    $"Thanh_toan_don_hang_{order.Id:N}");
+
+                return Redirect(paymentUrl.PaymentUrl);
             }
             catch (Exception ex)
             {
                 TempData["ErrorMessage"] = ex.Message;
                 return RedirectToPage("/Menu/Index");
             }
+        }
+
+        private static DateTime ToUtc(DateTime value)
+        {
+            if (value.Kind == DateTimeKind.Utc)
+                return value;
+
+            if (value.Kind == DateTimeKind.Unspecified)
+                value = DateTime.SpecifyKind(value, DateTimeKind.Local);
+
+            return value.ToUniversalTime();
+        }
+
+        private static string GetPendingDeliveryKey(Guid orderId) => $"pending_delivery_{orderId}";
+
+        private async Task NotifyMenuMealChangedAsync(Guid menuMealId)
+        {
+            var updatedMeal = await _menuService.GetMenuMealAsync(menuMealId);
+            if (updatedMeal != null)
+            {
+                await _hubContext.Clients.Group("menu")
+                    .SendAsync("MenuMealQuantityChanged", updatedMeal.RecipeName, updatedMeal.AvailableQuantity, updatedMeal.IsSoldOut);
+            }
+        }
+
+        private async Task NotifyOrderPlacedAsync(OrderDto order)
+        {
+            await _hubContext.Clients.Group("admin")
+                .SendAsync("NewOrderPlaced",
+                    order.Id.ToString(),
+                    order.OrderDate.ToString("MMM dd, yyyy HH:mm"),
+                    order.TotalAmount.ToString("N0"),
+                    order.Status,
+                    order.OrderDetails.Count);
+        }
+
+        private sealed class PendingDeliveryInfo
+        {
+            public string Address { get; set; } = string.Empty;
+            public DateTime DeliveryTimeUtc { get; set; }
+            public string DriverContact { get; set; } = string.Empty;
         }
     }
 }

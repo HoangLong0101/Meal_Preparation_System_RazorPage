@@ -31,11 +31,11 @@
                 <div class="stat-lbl">Total</div>
             </div>
             <div class="order-stat">
-                <div class="stat-num" style="color: #28a745;">@Model.Orders.Count(o => o.Status == "Completed")</div>
+                <div class="stat-num" style="color: #28a745;">@Model.Orders.Count(o => o.Status == "confirmed" || o.Status == "delivered")</div>
                 <div class="stat-lbl">Completed</div>
             </div>
             <div class="order-stat">
-                <div class="stat-num" style="color: #ffc107;">@Model.Orders.Count(o => o.Status == "Pending")</div>
+                <div class="stat-num" style="color: #ffc107;">@Model.Orders.Count(o => o.Status == "pending" || o.Status == "pending_payment")</div>
                 <div class="stat-lbl">Pending</div>
             </div>
         </div>

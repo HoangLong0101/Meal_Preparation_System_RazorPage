@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using MealPrepService.BusinessLogicLayer.DTOs;
@@ -25,6 +26,11 @@ namespace MealPrepService.BusinessLogicLayer.Services
         
         public Task<VnpayPaymentUrlDto> CreatePaymentUrlAsync(Guid orderId, decimal amount, string orderInfo)
         {
+            EnsureVnpayConfiguration();
+
+            var txnRef = orderId.ToString("N");
+            var safeOrderInfo = NormalizeOrderInfo(orderInfo, txnRef);
+
             var vnpayData = new SortedDictionary<string, string>
             {
                 {"vnp_Version", "2.1.0"},
@@ -35,25 +41,29 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 {"vnp_CurrCode", "VND"},
                 {"vnp_IpAddr", "127.0.0.1"}, // Should be actual client IP
                 {"vnp_Locale", "vn"},
-                {"vnp_OrderInfo", orderInfo},
+                {"vnp_OrderInfo", safeOrderInfo},
                 {"vnp_OrderType", "other"},
                 {"vnp_ReturnUrl", VnpayReturnUrl},
-                {"vnp_TxnRef", orderId.ToString()}
+                {"vnp_TxnRef", txnRef}
             };
             
             // Create secure hash
-            var hashData = string.Join("&", vnpayData.Select(kv => $"{kv.Key}={kv.Value}"));
+            var hashData = BuildHashData(vnpayData);
             var secureHash = CreateSecureHash(hashData, VnpayHashSecret);
+            vnpayData.Add("vnp_SecureHashType", "HMACSHA512");
             vnpayData.Add("vnp_SecureHash", secureHash);
             
             // Build payment URL
-            var queryString = string.Join("&", vnpayData.Select(kv => $"{kv.Key}={Uri.EscapeDataString(kv.Value)}"));
+            var queryString = BuildQueryString(vnpayData);
             var paymentUrl = $"{VnpayUrl}?{queryString}";
+
+            _logger.LogInformation("Created VNPAY payment URL for order {OrderId}. TmnCode={TmnCode}, ReturnUrl={ReturnUrl}, TxnRef={TxnRef}",
+                orderId, VnpayTmnCode, VnpayReturnUrl, txnRef);
             
             return Task.FromResult(new VnpayPaymentUrlDto
             {
                 PaymentUrl = paymentUrl,
-                TransactionId = orderId.ToString()
+                TransactionId = txnRef
             });
         }
         
@@ -122,10 +132,17 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 }
                 
                 // Create hash data
-                var hashData = string.Join("&", vnpayData.Select(kv => $"{kv.Key}={kv.Value}"));
+                var hashData = BuildHashData(vnpayData);
                 var computedHash = CreateSecureHash(hashData, VnpayHashSecret);
-                
-                return computedHash.Equals(callbackDto.vnp_SecureHash, StringComparison.OrdinalIgnoreCase);
+
+                var isValid = computedHash.Equals(callbackDto.vnp_SecureHash, StringComparison.OrdinalIgnoreCase);
+                if (!isValid)
+                {
+                    _logger.LogWarning("VNPAY callback signature mismatch. TxnRef={TxnRef}, Expected={ExpectedHash}, Actual={ActualHash}, HashData={HashData}",
+                        callbackDto.vnp_TxnRef, computedHash, callbackDto.vnp_SecureHash, hashData);
+                }
+
+                return isValid;
             }
             catch (Exception ex)
             {
@@ -141,6 +158,47 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 var hashBytes = hmac.ComputeHash(Encoding.UTF8.GetBytes(data));
                 return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();
             }
+        }
+
+        private static string BuildHashData(SortedDictionary<string, string> data)
+        {
+            return string.Join("&", data
+                .Where(kv => !string.IsNullOrEmpty(kv.Value))
+                .Select(kv => $"{kv.Key}={WebUtility.UrlEncode(kv.Value)}"));
+        }
+
+        private static string BuildQueryString(SortedDictionary<string, string> data)
+        {
+            return string.Join("&", data
+                .Where(kv => !string.IsNullOrEmpty(kv.Value))
+                .Select(kv => $"{kv.Key}={WebUtility.UrlEncode(kv.Value)}"));
+        }
+
+        private void EnsureVnpayConfiguration()
+        {
+            if (string.IsNullOrWhiteSpace(VnpayUrl) ||
+                string.IsNullOrWhiteSpace(VnpayTmnCode) ||
+                string.IsNullOrWhiteSpace(VnpayHashSecret) ||
+                string.IsNullOrWhiteSpace(VnpayReturnUrl) ||
+                VnpayTmnCode.Contains("YOUR_", StringComparison.OrdinalIgnoreCase) ||
+                VnpayHashSecret.Contains("YOUR_", StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException("VNPAY configuration is missing. Please set VnPay:Url, VnPay:TmnCode, VnPay:HashSecret, VnPay:ReturnUrl in user-secrets.");
+            }
+        }
+
+        private static string NormalizeOrderInfo(string orderInfo, string txnRef)
+        {
+            var cleaned = string.IsNullOrWhiteSpace(orderInfo)
+                ? $"Thanh_toan_don_hang_{txnRef}"
+                : orderInfo.Trim().Replace(" ", "_");
+
+            if (cleaned.Length > 255)
+            {
+                cleaned = cleaned[..255];
+            }
+
+            return cleaned;
         }
         
         private string GetResponseMessage(string responseCode)

@@ -295,6 +295,14 @@
                                 </ul>
                             </li>
                         }
+                        @if (Context.Session.GetString("Role") == "DeliveryMan")
+                        {
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Delivery/Index">
+                                    <i class="bi bi-truck me-1"></i>Delivery
+                                </a>
+                            </li>
+                        }
                         <li class="nav-item">
                             <a class="nav-link nav-link-custom" asp-area="" asp-page="/Menu/Index">
                                 <i class="bi bi-cup-hot me-1"></i>Menu

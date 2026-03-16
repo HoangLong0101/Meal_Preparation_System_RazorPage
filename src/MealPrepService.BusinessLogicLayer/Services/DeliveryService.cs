@@ -25,16 +25,17 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 throw new ArgumentNullException(nameof(dto));
             }
 
-            // Validate order exists and is in confirmed status
+            // Validate order exists and is in a status that allows delivery scheduling
             var order = await _unitOfWork.Orders.GetByIdAsync(orderId);
             if (order == null)
             {
                 throw new BusinessException($"Order with ID {orderId} not found");
             }
 
-            if (order.Status != "confirmed")
+            var schedulableStatuses = new[] { "confirmed", "pending_payment" };
+            if (!schedulableStatuses.Contains(order.Status))
             {
-                throw new BusinessException($"Cannot create delivery schedule for order {orderId}. Order status must be 'confirmed', current status: {order.Status}");
+                throw new BusinessException($"Cannot create delivery schedule for order {orderId}. Order status must be one of: {string.Join(", ", schedulableStatuses)}. Current status: {order.Status}");
             }
 
             // Check if delivery schedule already exists for this order
