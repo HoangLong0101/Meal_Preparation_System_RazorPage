@@ -31,6 +31,9 @@ namespace Meal_Preparation_System_RazorPage.Pages.Account
         [BindProperty]
         public Guid? SelectedAllergyId { get; set; }
 
+        [BindProperty]
+        public string? NewAllergyName { get; set; }
+
         public IEnumerable<FamilyMemberDto> FamilyMembers { get; set; } = [];
 
         [BindProperty]
@@ -117,17 +120,42 @@ namespace Meal_Preparation_System_RazorPage.Pages.Account
             if (accountIdStr == null)
                 return RedirectToPage("/Account/Login");
 
-            if (SelectedAllergyId == null || SelectedAllergyId == Guid.Empty)
-            {
-                TempData["ErrorMessage"] = "Please select an allergy.";
-                return RedirectToPage();
-            }
-
             try
             {
                 var accountId = Guid.Parse(accountIdStr);
                 var profile = await _healthProfileService.GetByAccountIdAsync(accountId);
-                await _healthProfileService.AddAllergyAsync(profile.Id, SelectedAllergyId.Value);
+
+                Guid allergyId;
+                if (SelectedAllergyId.HasValue && SelectedAllergyId.Value != Guid.Empty)
+                {
+                    allergyId = SelectedAllergyId.Value;
+                }
+                else if (!string.IsNullOrWhiteSpace(NewAllergyName))
+                {
+                    var normalizedName = NewAllergyName.Trim();
+                    var existing = (await _allergyService.GetAllAsync())
+                        .FirstOrDefault(a => a.AllergyName.Equals(normalizedName, StringComparison.OrdinalIgnoreCase));
+
+                    if (existing != null)
+                    {
+                        allergyId = existing.Id;
+                    }
+                    else
+                    {
+                        var created = await _allergyService.CreateAsync(new CreateAllergyDto
+                        {
+                            AllergyName = normalizedName
+                        });
+                        allergyId = created.Id;
+                    }
+                }
+                else
+                {
+                    TempData["ErrorMessage"] = "Please select an allergy or enter a new one.";
+                    return RedirectToPage();
+                }
+
+                await _healthProfileService.AddAllergyAsync(profile.Id, allergyId);
                 TempData["SuccessMessage"] = "Allergy added to your profile.";
             }
             catch (Exception ex)

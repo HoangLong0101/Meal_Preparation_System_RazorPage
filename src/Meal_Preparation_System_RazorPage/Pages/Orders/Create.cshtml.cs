@@ -16,7 +16,7 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
         private readonly IVnpayService _vnpayService;
         private readonly IDeliveryService _deliveryService;
         private readonly IHubContext<MealPrepHub> _hubContext;
-        private readonly string _googleMapsApiKey;
+        private readonly string _mapboxAccessToken;
 
         public CreateModel(
             IOrderService orderService,
@@ -30,12 +30,12 @@ namespace Meal_Preparation_System_RazorPage.Pages.Orders
             _menuService = menuService;
             _vnpayService = vnpayService;
             _deliveryService = deliveryService;
-            _googleMapsApiKey = configuration["GoogleMaps:ApiKey"] ?? string.Empty;
+            _mapboxAccessToken = configuration["Mapbox:AccessToken"] ?? string.Empty;
             _hubContext = hubContext;
         }
 
         public MenuMealDto? SelectedMeal { get; set; }
-        public string GoogleMapsApiKey => _googleMapsApiKey;
+        public string MapboxAccessToken => _mapboxAccessToken;
 
         [BindProperty]
         public Guid MenuMealId { get; set; }
