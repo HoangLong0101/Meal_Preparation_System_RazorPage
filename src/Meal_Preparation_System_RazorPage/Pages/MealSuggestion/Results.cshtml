@@ -413,6 +413,33 @@
                                         </ul>
                                     </details>
                                 }
+
+                                @if (suggestion.PerPersonPortions?.Any() == true)
+                                {
+                                    <details class="ingredients-accordion">
+                                        <summary>
+                                            <i class="bi bi-people-fill"></i>
+                                            Portion by Person (@suggestion.PerPersonPortions.Count)
+                                        </summary>
+                                        <ul class="ingredients-list">
+                                            @foreach (var p in suggestion.PerPersonPortions)
+                                            {
+                                                <li>
+                                                    <i class="bi bi-dot"></i>
+                                                    <strong>@p.Person</strong>: @p.Portions portion(s), @p.QuantityGuide
+                                                    @if (p.EstimatedCalories > 0)
+                                                    {
+                                                        <span> (~@p.EstimatedCalories.ToString("0") cal)</span>
+                                                    }
+                                                    @if (!string.IsNullOrWhiteSpace(p.Note))
+                                                    {
+                                                        <span> - @p.Note</span>
+                                                    }
+                                                </li>
+                                            }
+                                        </ul>
+                                    </details>
+                                }
                             </div>
 
                             <div class="card-footer-custom">
@@ -433,8 +460,23 @@
                                             var ingredientsList = suggestion.Ingredients.Select(i => new { name = i.Name, quantity = i.Quantity, unit = i.Unit });
                                             ingredientsJson = System.Text.Json.JsonSerializer.Serialize(ingredientsList);
                                         }
+
+                                        var perPersonPortionsJson = "[]";
+                                        if (suggestion.PerPersonPortions?.Any() == true)
+                                        {
+                                            var portionsList = suggestion.PerPersonPortions.Select(p => new
+                                            {
+                                                person = p.Person,
+                                                portions = p.Portions,
+                                                quantityGuide = p.QuantityGuide,
+                                                estimatedCalories = p.EstimatedCalories,
+                                                note = p.Note
+                                            });
+                                            perPersonPortionsJson = System.Text.Json.JsonSerializer.Serialize(portionsList);
+                                        }
                                     }
                                     <input type="hidden" name="ingredientsJson" value="@ingredientsJson" />
+                                    <input type="hidden" name="perPersonPortionsJson" value="@perPersonPortionsJson" />
 
                                     <button type="submit" class="btn-add-plan">
                                         <i class="bi bi-plus-circle-fill"></i>

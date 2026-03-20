@@ -74,7 +74,34 @@ namespace MealPrepService.BusinessLogicLayer.Services
             _logger.LogInformation("Delivery schedule created for order {OrderId} with delivery time {DeliveryTime}", 
                 orderId, dto.DeliveryTime);
 
-            return MapToDto(deliverySchedule);
+            return await MapToDtoAsync(deliverySchedule);
+        }
+
+        public async Task AssignShipperAsync(Guid orderId, Guid shipperId)
+        {
+            var shipper = await _unitOfWork.Shippers.GetByIdAsync(shipperId);
+            if (shipper == null || !shipper.IsActive)
+            {
+                throw new BusinessException("Selected shipper is invalid or inactive");
+            }
+
+            var deliveries = await _unitOfWork.DeliverySchedules.FindAsync(d => d.OrderId == orderId);
+            var deliverySchedule = deliveries.FirstOrDefault();
+            if (deliverySchedule == null)
+            {
+                throw new BusinessException("Delivery schedule not found for this order");
+            }
+
+            deliverySchedule.ShipperId = shipperId;
+            deliverySchedule.DriverContact = string.IsNullOrWhiteSpace(shipper.ContactPhone)
+                ? shipper.FullName
+                : shipper.ContactPhone;
+            deliverySchedule.UpdatedAt = DateTime.UtcNow;
+
+            await _unitOfWork.DeliverySchedules.UpdateAsync(deliverySchedule);
+            await _unitOfWork.SaveChangesAsync();
+
+            _logger.LogInformation("Assigned shipper {ShipperId} to order {OrderId}", shipperId, orderId);
         }
 
         public async Task<IEnumerable<DeliveryScheduleDto>> GetByAccountIdAsync(Guid accountId)
@@ -95,7 +122,7 @@ namespace MealPrepService.BusinessLogicLayer.Services
             foreach (var delivery in deliverySchedules)
             {
                 var order = orders.FirstOrDefault(o => o.Id == delivery.OrderId);
-                var dto = MapToDto(delivery);
+                var dto = await MapToDtoAsync(delivery);
                 
                 if (order != null)
                 {
@@ -130,15 +157,20 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 throw new BusinessException($"Account {deliveryManId} is not a delivery man. Current role: {deliveryMan.Role}");
             }
 
-            // For now, we'll return all delivery schedules since we don't have a direct assignment mechanism
-            // In a real implementation, there would be a DeliveryManId field in DeliverySchedule
-            var allDeliveries = await _unitOfWork.DeliverySchedules.GetAllAsync();
+            var shipperProfiles = await _unitOfWork.Shippers.FindAsync(s => s.AccountId == deliveryManId && s.IsActive);
+            var shipperProfile = shipperProfiles.FirstOrDefault();
+            if (shipperProfile == null)
+            {
+                return new List<DeliveryScheduleDto>();
+            }
+
+            var allDeliveries = await _unitOfWork.DeliverySchedules.FindAsync(d => d.ShipperId == shipperProfile.Id);
             
             var deliveryDtos = new List<DeliveryScheduleDto>();
             foreach (var delivery in allDeliveries)
             {
                 var order = await _unitOfWork.Orders.GetByIdAsync(delivery.OrderId);
-                var dto = MapToDto(delivery);
+                var dto = await MapToDtoAsync(delivery);
                 
                 if (order != null)
                 {
@@ -237,12 +269,21 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 deliveryId, newTime);
         }
 
-        private DeliveryScheduleDto MapToDto(DeliverySchedule deliverySchedule)
+        private async Task<DeliveryScheduleDto> MapToDtoAsync(DeliverySchedule deliverySchedule)
         {
+            string? shipperName = null;
+            if (deliverySchedule.ShipperId.HasValue)
+            {
+                var shipper = await _unitOfWork.Shippers.GetByIdAsync(deliverySchedule.ShipperId.Value);
+                shipperName = shipper?.FullName;
+            }
+
             return new DeliveryScheduleDto
             {
                 Id = deliverySchedule.Id,
                 OrderId = deliverySchedule.OrderId,
+                ShipperId = deliverySchedule.ShipperId,
+                ShipperName = shipperName,
                 DeliveryTime = deliverySchedule.DeliveryTime,
                 Address = deliverySchedule.Address,
                 DriverContact = deliverySchedule.DriverContact

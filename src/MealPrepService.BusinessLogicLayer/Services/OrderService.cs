@@ -407,10 +407,19 @@ namespace MealPrepService.BusinessLogicLayer.Services
             DeliveryScheduleDto? deliveryScheduleDto = null;
             if (order.DeliverySchedule != null)
             {
+                string? shipperName = null;
+                if (order.DeliverySchedule.ShipperId.HasValue)
+                {
+                    var shipper = await _unitOfWork.Shippers.GetByIdAsync(order.DeliverySchedule.ShipperId.Value);
+                    shipperName = shipper?.FullName;
+                }
+
                 deliveryScheduleDto = new DeliveryScheduleDto
                 {
                     Id = order.DeliverySchedule.Id,
                     OrderId = order.DeliverySchedule.OrderId,
+                    ShipperId = order.DeliverySchedule.ShipperId,
+                    ShipperName = shipperName,
                     DeliveryTime = order.DeliverySchedule.DeliveryTime,
                     Address = order.DeliverySchedule.Address,
                     DriverContact = order.DeliverySchedule.DriverContact

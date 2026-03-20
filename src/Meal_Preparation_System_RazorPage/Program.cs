@@ -56,6 +56,7 @@ builder.Services.AddScoped<ICustomerProfileAnalyzer, CustomerProfileAnalyzer>();
 builder.Services.AddScoped<IRecommendationEngine, AIRecommendationEngine>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IDeliveryService, DeliveryService>();
+builder.Services.AddScoped<IShipperService, ShipperService>();
 builder.Services.AddScoped<ILLMService, GeminiRecommendationService>();
 builder.Services.AddScoped<IRecipeService, RecipeService>();
 builder.Services.AddScoped<IIngredientService, IngredientService>();

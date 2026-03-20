@@ -87,6 +87,7 @@ namespace MealPrepService.BusinessLogicLayer.Interfaces
     {
         public string Role { get; set; } = string.Empty; // e.g. "Father", "Mother", "Child (5 years)", "Elderly"
         public string? Note { get; set; } // e.g. "Diabetic", "Vegetarian", "Allergic to shrimp"
+        public int Portion { get; set; } = 1;
     }
 
     public class DailyMealSuggestionResponse
@@ -107,9 +108,19 @@ namespace MealPrepService.BusinessLogicLayer.Interfaces
         public bool IsFromDatabase { get; set; }
         public string? Instructions { get; set; }
         public List<SuggestionIngredient>? Ingredients { get; set; }
+        public List<SuggestionPersonPortion>? PerPersonPortions { get; set; }
         public float ProteinG { get; set; }
         public float CarbsG { get; set; }
         public float FatG { get; set; }
+    }
+
+    public class SuggestionPersonPortion
+    {
+        public string Person { get; set; } = string.Empty;
+        public int Portions { get; set; } = 1;
+        public string QuantityGuide { get; set; } = string.Empty;
+        public float EstimatedCalories { get; set; }
+        public string? Note { get; set; }
     }
 
     public class SuggestionIngredient

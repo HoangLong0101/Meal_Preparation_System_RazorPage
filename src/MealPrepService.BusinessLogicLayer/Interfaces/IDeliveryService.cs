@@ -5,6 +5,7 @@ namespace MealPrepService.BusinessLogicLayer.Interfaces;
 public interface IDeliveryService
 {
     Task<DeliveryScheduleDto> CreateDeliveryScheduleAsync(Guid orderId, DeliveryScheduleDto dto);
+    Task AssignShipperAsync(Guid orderId, Guid shipperId);
     Task<IEnumerable<DeliveryScheduleDto>> GetByAccountIdAsync(Guid accountId);
     Task<IEnumerable<DeliveryScheduleDto>> GetByDeliveryManAsync(Guid deliveryManId);
     Task CompleteDeliveryAsync(Guid deliveryId);

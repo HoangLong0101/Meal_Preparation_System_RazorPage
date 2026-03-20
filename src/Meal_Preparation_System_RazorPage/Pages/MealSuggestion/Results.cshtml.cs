@@ -67,7 +67,15 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
                         Name = i.Name,
                         Quantity = i.Quantity,
                         Unit = i.Unit
-                    }).ToList() ?? new List<SuggestionIngredientItem>()
+                    }).ToList() ?? new List<SuggestionIngredientItem>(),
+                    PerPersonPortions = s.PerPersonPortions?.Select(p => new SuggestionPersonPortionItem
+                    {
+                        Person = p.Person,
+                        Portions = p.Portions,
+                        QuantityGuide = p.QuantityGuide,
+                        EstimatedCalories = p.EstimatedCalories,
+                        Note = p.Note
+                    }).ToList() ?? new List<SuggestionPersonPortionItem>()
                 }).ToList();
             }
             catch (Exception ex)
@@ -85,6 +93,7 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
             string? serveDate,
             Guid? recipeId,
             string? ingredientsJson,
+            string? perPersonPortionsJson,
             string? instructions,
             float calories,
             float proteinG,
@@ -147,6 +156,35 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
                 };
 
                 RecipeDto? recipeToAdd = null;
+                string portionSummaryText = string.Empty;
+
+                if (!string.IsNullOrWhiteSpace(perPersonPortionsJson))
+                {
+                    try
+                    {
+                        var portions = System.Text.Json.JsonSerializer.Deserialize<List<PerPersonPortionJsonHelper>>(perPersonPortionsJson,
+                            new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                        if (portions?.Any() == true)
+                        {
+                            var lines = portions.Select(p =>
+                            {
+                                var person = string.IsNullOrWhiteSpace(p.Person) ? "Member" : p.Person;
+                                var portionsCount = p.Portions > 0 ? p.Portions : 1;
+                                var quantityGuide = string.IsNullOrWhiteSpace(p.QuantityGuide) ? "N/A" : p.QuantityGuide;
+                                var caloriesText = p.EstimatedCalories > 0 ? $" (~{p.EstimatedCalories:0} cal)" : string.Empty;
+                                var noteText = string.IsNullOrWhiteSpace(p.Note) ? string.Empty : $" - {p.Note}";
+                                return $"- {person}: {portionsCount} portion(s), {quantityGuide}{caloriesText}{noteText}";
+                            });
+
+                            portionSummaryText = "\n\nPer-person portions:\n" + string.Join("\n", lines);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to parse perPersonPortionsJson payload");
+                    }
+                }
 
                 if (recipeId.HasValue && recipeId.Value != Guid.Empty)
                 {
@@ -166,7 +204,7 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
                     var createRecipeDto = new CreateRecipeDto
                     {
                         RecipeName = mealName.Trim(),
-                        Instructions = !string.IsNullOrWhiteSpace(instructions) ? instructions.Trim() : "AI-generated meal. Instructions will be updated.",
+                        Instructions = (!string.IsNullOrWhiteSpace(instructions) ? instructions.Trim() : "AI-generated meal. Instructions will be updated.") + portionSummaryText,
                         TotalCalories = calories > 0 ? calories : 500,
                         ProteinG = proteinG >= 0 ? proteinG : 25,
                         FatG = fatG >= 0 ? fatG : 15,
@@ -232,6 +270,7 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
         public float CarbsG { get; set; }
         public float FatG { get; set; }
         public List<SuggestionIngredientItem> Ingredients { get; set; } = new();
+        public List<SuggestionPersonPortionItem> PerPersonPortions { get; set; } = new();
     }
 
     public class SuggestionIngredientItem
@@ -241,10 +280,28 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
         public string Unit { get; set; } = string.Empty;
     }
 
+    public class SuggestionPersonPortionItem
+    {
+        public string Person { get; set; } = string.Empty;
+        public int Portions { get; set; } = 1;
+        public string QuantityGuide { get; set; } = string.Empty;
+        public float EstimatedCalories { get; set; }
+        public string? Note { get; set; }
+    }
+
     internal class IngredientJsonHelper
     {
         public string? Name { get; set; }
         public float? Quantity { get; set; }
         public string? Unit { get; set; }
+    }
+
+    internal class PerPersonPortionJsonHelper
+    {
+        public string? Person { get; set; }
+        public int Portions { get; set; }
+        public string? QuantityGuide { get; set; }
+        public float EstimatedCalories { get; set; }
+        public string? Note { get; set; }
     }
 }

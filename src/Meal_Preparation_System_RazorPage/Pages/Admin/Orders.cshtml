@@ -32,6 +32,7 @@ else
                         <th>Items</th>
                         <th>Total</th>
                         <th>Payment</th>
+                        <th>Shipper</th>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -58,6 +59,16 @@ else
                                 }
                             </td>
                             <td>
+                                @if (order.DeliverySchedule?.ShipperName != null)
+                                {
+                                    <span class="badge badge-soft-success"><i class="bi bi-truck me-1"></i>@order.DeliverySchedule.ShipperName</span>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">Not assigned</span>
+                                }
+                            </td>
+                            <td>
                                 <span class="badge @(order.Status switch
                                 {
                                     "confirmed" or "delivered" => "badge-soft-success",
@@ -67,18 +78,36 @@ else
                                 })" data-order-status-badge>@order.Status</span>
                             </td>
                             <td>
-                                <form method="post" asp-page-handler="UpdateStatus" class="d-flex align-items-center gap-1">
-                                    @Html.AntiForgeryToken()
-                                    <input type="hidden" name="orderId" value="@order.Id" />
-                                    <select name="newStatus" class="form-select form-select-sm" style="width: 130px;">
-                                        <option value="pending" selected="@(order.Status == "pending")">pending</option>
-                                        <option value="confirmed" selected="@(order.Status == "confirmed")">confirmed</option>
-                                        <option value="delivered" selected="@(order.Status == "delivered")">delivered</option>
-                                    </select>
-                                    <button type="submit" class="btn btn-outline-primary btn-sm">
-                                        <i class="bi bi-check-lg"></i>
-                                    </button>
-                                </form>
+                                <div class="d-flex flex-column gap-1">
+                                    <form method="post" asp-page-handler="AssignShipper" class="d-flex align-items-center gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                        <select name="shipperId" class="form-select form-select-sm" style="width: 170px;" required>
+                                            <option value="">Assign shipper...</option>
+                                            @foreach (var shipper in Model.AvailableShippers)
+                                            {
+                                                var selected = order.DeliverySchedule?.ShipperId == shipper.Id;
+                                                <option value="@shipper.Id" selected="@selected">@shipper.FullName</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-outline-success btn-sm" title="Assign shipper">
+                                            <i class="bi bi-truck"></i>
+                                        </button>
+                                    </form>
+
+                                    <form method="post" asp-page-handler="UpdateStatus" class="d-flex align-items-center gap-1">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="orderId" value="@order.Id" />
+                                        <select name="newStatus" class="form-select form-select-sm" style="width: 130px;">
+                                            <option value="pending" selected="@(order.Status == "pending")">pending</option>
+                                            <option value="confirmed" selected="@(order.Status == "confirmed")">confirmed</option>
+                                            <option value="delivered" selected="@(order.Status == "delivered")">delivered</option>
+                                        </select>
+                                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                                            <i class="bi bi-check-lg"></i>
+                                        </button>
+                                    </form>
+                                </div>
                             </td>
                         </tr>
                     }

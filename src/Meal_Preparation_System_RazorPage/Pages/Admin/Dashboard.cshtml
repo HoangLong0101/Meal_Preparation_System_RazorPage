@@ -5,34 +5,59 @@
     ViewData["Title"] = "Admin Dashboard";
 }
 
+<style>
+    .dashboard-chart-box {
+        position: relative;
+        height: 240px;
+        max-height: 240px;
+    }
+
+    .dashboard-chart-box canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+</style>
+
 <div class="page-header">
     <h2><i class="bi bi-speedometer2 me-2" style="color: var(--clr-primary);"></i>Admin Dashboard</h2>
     <p class="mb-0">Overview of your meal prep business</p>
 </div>
 
 <div class="row g-4 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card-modern p-4 text-center">
             <div class="stat-label"><i class="bi bi-people me-1"></i>Total Customers</div>
             <div class="fw-bold fs-3 mt-2" style="color: var(--clr-primary);">@Model.Stats.TotalCustomers</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card-modern p-4 text-center">
             <div class="stat-label"><i class="bi bi-credit-card me-1"></i>Active Subscriptions</div>
             <div class="fw-bold fs-3 mt-2" style="color: var(--clr-success);">@Model.Stats.ActiveSubscriptions</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
         <div class="card-modern p-4 text-center">
             <div class="stat-label"><i class="bi bi-clock-history me-1"></i>Pending Orders</div>
             <div class="fw-bold fs-3 mt-2" style="color: var(--clr-warning);">@Model.Stats.PendingOrders</div>
         </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
+        <div class="card-modern p-4 text-center">
+            <div class="stat-label"><i class="bi bi-cash-coin me-1"></i>Today Income</div>
+            <div class="fw-bold fs-3 mt-2" style="color: var(--clr-success);">@Model.Stats.TodayRevenue.ToString("N0") ₫</div>
+        </div>
+    </div>
+    <div class="col-md-2">
         <div class="card-modern p-4 text-center">
             <div class="stat-label"><i class="bi bi-cash-stack me-1"></i>This Month Revenue</div>
             <div class="fw-bold fs-3 mt-2" style="color: var(--clr-primary);">@Model.Stats.CurrentMonthRevenue.ToString("N0") ₫</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card-modern p-4 text-center">
+            <div class="stat-label"><i class="bi bi-graph-up-arrow me-1"></i>This Year Income</div>
+            <div class="fw-bold fs-3 mt-2" style="color: var(--clr-primary);">@Model.Stats.CurrentYearRevenue.ToString("N0") ₫</div>
         </div>
     </div>
 </div>
@@ -75,3 +100,150 @@
         </div>
     </div>
 }
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card-modern p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-graph-up me-2" style="color: var(--clr-primary);"></i>Revenue Trend (6 months)</h5>
+            <div class="dashboard-chart-box">
+                <canvas id="revenueTrendChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card-modern p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-pie-chart me-2" style="color: var(--clr-success);"></i>Top Dish Revenue</h5>
+            <div class="dashboard-chart-box">
+                <canvas id="dishRevenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card-modern p-4 h-100">
+            <h5 class="fw-bold mb-3"><i class="bi bi-trophy me-2" style="color: var(--clr-warning);"></i>Best-selling Dishes (Current Month)</h5>
+            @if (Model.TopSellingDishes.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Dish</th>
+                                <th class="text-end">Quantity Sold</th>
+                                <th class="text-end">Revenue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var dish in Model.TopSellingDishes)
+                            {
+                                <tr>
+                                    <td class="fw-semibold">@dish.RecipeName</td>
+                                    <td class="text-end">@dish.TotalQuantitySold</td>
+                                    <td class="text-end fw-bold" style="color: var(--clr-primary);">@dish.TotalRevenue.ToString("N0") ₫</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">No sales data this month yet.</p>
+            }
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card-modern p-4 h-100">
+            <h5 class="fw-bold mb-2"><i class="bi bi-stars me-2" style="color: var(--clr-primary);"></i>AI Demand Analysis</h5>
+            <form method="post" asp-page-handler="PredictDemand" class="mb-3">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-lightbulb me-2"></i>Dự đoán xu hướng người dùng
+                </button>
+            </form>
+            <p class="mb-3 text-muted">@Model.AiInsightSummary</p>
+
+            @if (Model.HasAiPrediction && Model.AiSuggestedMenus.Any())
+            {
+                <div class="d-flex flex-column gap-2">
+                    @foreach (var suggestion in Model.AiSuggestedMenus)
+                    {
+                        <div class="border rounded p-3">
+                            <div class="fw-semibold">@suggestion.RecipeName</div>
+                            <div class="small text-muted">@suggestion.DietaryInfo</div>
+                            <div class="small mt-1">~ @suggestion.EstimatedCalories.ToString("N0") kcal</div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    (() => {
+        const rootStyle = getComputedStyle(document.documentElement);
+        const primaryColor = rootStyle.getPropertyValue('--clr-primary').trim() || 'var(--clr-primary)';
+        const successColor = rootStyle.getPropertyValue('--clr-success').trim() || 'var(--clr-success)';
+
+        const revenueLabels = @Html.Raw(Model.RevenueTrendJson);
+        const revenueData = @Html.Raw(Model.RevenueDataJson);
+        const dishLabels = @Html.Raw(Model.DishLabelsJson);
+        const dishData = @Html.Raw(Model.DishRevenueJson);
+
+        const revenueCanvas = document.getElementById('revenueTrendChart');
+        if (revenueCanvas && revenueLabels.length > 0) {
+            new Chart(revenueCanvas, {
+                type: 'line',
+                data: {
+                    labels: revenueLabels,
+                    datasets: [{
+                        label: 'Revenue (VND)',
+                        data: revenueData,
+                        borderColor: primaryColor,
+                        backgroundColor: primaryColor,
+                        tension: 0.3,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        const dishCanvas = document.getElementById('dishRevenueChart');
+        if (dishCanvas && dishLabels.length > 0) {
+            new Chart(dishCanvas, {
+                type: 'bar',
+                data: {
+                    labels: dishLabels,
+                    datasets: [{
+                        label: 'Dish Revenue (VND)',
+                        data: dishData,
+                        backgroundColor: successColor,
+                        borderColor: successColor,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+    })();
+</script>

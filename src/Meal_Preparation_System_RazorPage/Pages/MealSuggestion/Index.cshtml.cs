@@ -151,6 +151,16 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
                 };
 
                 // Build request
+                var validFamilyMembers = FamilyMembers?
+                    .Where(fm => !string.IsNullOrWhiteSpace(fm.Role))
+                    .Select(fm => new FamilyMemberInfo
+                    {
+                        Role = fm.Role,
+                        Note = fm.Note,
+                        Portion = fm.Portion > 0 ? fm.Portion : 1
+                    })
+                    .ToList() ?? new List<FamilyMemberInfo>();
+
                 var request = new DailyMealRequest
                 {
                     MealType = MealType,
@@ -161,7 +171,7 @@ namespace Meal_Preparation_System_RazorPage.Pages.MealSuggestion
                     SpecificRequest = SpecificRequest,
                     PrioritizeHealthy = PrioritizeHealthy,
                     NumberOfPeople = NumberOfPeople,
-                    FamilyMembers = FamilyMembers?.Where(fm => !string.IsNullOrWhiteSpace(fm.Role)).ToList() ?? new()
+                    FamilyMembers = validFamilyMembers
                 };
 
                 // Get available recipes from database

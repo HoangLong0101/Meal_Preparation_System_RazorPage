@@ -677,8 +677,9 @@ namespace MealPrepService.BusinessLogicLayer.Services
                     promptBuilder.AppendLine("- Family members:");
                     foreach (var member in request.FamilyMembers)
                     {
+                        var portion = member.Portion > 0 ? member.Portion : 1;
                         var note = string.IsNullOrWhiteSpace(member.Note) ? "" : $" ({member.Note})";
-                        promptBuilder.AppendLine($"  • {member.Role}{note}");
+                        promptBuilder.AppendLine($"  • {member.Role} - {portion} portion(s){note}");
                     }
                 }
 
@@ -706,7 +707,10 @@ namespace MealPrepService.BusinessLogicLayer.Services
                     promptBuilder.AppendLine($"Suggest EXACTLY 2 suitable meals for {request.NumberOfPeople} people with COMPLETE ingredient lists.");
                     promptBuilder.AppendLine($"Scale ingredient quantities for {request.NumberOfPeople} servings.");
                     if (request.FamilyMembers?.Any() == true)
+                    {
                         promptBuilder.AppendLine("Consider ALL family members' dietary needs, ages, and health conditions when suggesting meals.");
+                        promptBuilder.AppendLine("Ensure each listed family member has a dedicated portion based on their requested portion count.");
+                    }
                 }
                 else
                 {
@@ -714,11 +718,14 @@ namespace MealPrepService.BusinessLogicLayer.Services
                 }
                 promptBuilder.AppendLine();
                 promptBuilder.AppendLine("RETURN JSON IN THIS FORMAT:");
-                promptBuilder.AppendLine("{\"overallReasoning\":\"brief reason\",\"suggestions\":[{\"recipeId\":null,\"mealName\":\"Meal Name\",\"description\":\"10-word description\",\"estimatedCalories\":500,\"estimatedPrice\":50000,\"prepTime\":30,\"reasoning\":\"Brief reason\",\"isFromDatabase\":false,\"proteinG\":25,\"carbsG\":45,\"fatG\":15,\"instructions\":\"Step 1... Step 2...\",\"ingredients\":[{\"name\":\"ingredient\",\"quantity\":200,\"unit\":\"g\"}]}]}");
+                promptBuilder.AppendLine("{\"overallReasoning\":\"brief reason\",\"suggestions\":[{\"recipeId\":null,\"mealName\":\"Meal Name\",\"description\":\"10-word description\",\"estimatedCalories\":500,\"estimatedPrice\":50000,\"prepTime\":30,\"reasoning\":\"Brief reason\",\"isFromDatabase\":false,\"proteinG\":25,\"carbsG\":45,\"fatG\":15,\"instructions\":\"Step 1... Step 2...\",\"ingredients\":[{\"name\":\"ingredient\",\"quantity\":200,\"unit\":\"g\"}],\"perPersonPortions\":[{\"person\":\"You\",\"portions\":1,\"quantityGuide\":\"about 1 bowl / 250g\",\"estimatedCalories\":500,\"note\":\"Optional short note\"}]}]}");
                 promptBuilder.AppendLine();
                 promptBuilder.AppendLine("IMPORTANT:");
                 promptBuilder.AppendLine("- Each meal MUST have 5-8 ingredients (proteins, vegetables, seasonings, oils, sauces)");
                 promptBuilder.AppendLine("- Include ALL ingredients needed to cook the complete meal");
+                promptBuilder.AppendLine("- suggestions array MUST contain EXACTLY 2 options");
+                promptBuilder.AppendLine("- For EACH option, perPersonPortions MUST include one entry for each person/family member");
+                promptBuilder.AppendLine("- quantityGuide must describe practical per-person serving size (e.g., grams, bowl, plate)");
                 promptBuilder.AppendLine("- Keep instructions under 200 characters");
                 promptBuilder.AppendLine("- Keep reasoning under 50 characters");
 
@@ -1135,6 +1142,35 @@ namespace MealPrepService.BusinessLogicLayer.Services
                                     ingredient.Unit = unit.GetString() ?? string.Empty;
                                 
                                 suggestion.Ingredients.Add(ingredient);
+                            }
+                        }
+
+                        if (suggestionElement.TryGetProperty("perPersonPortions", out var perPersonPortions))
+                        {
+                            suggestion.PerPersonPortions = new List<SuggestionPersonPortion>();
+                            foreach (var portionElement in perPersonPortions.EnumerateArray())
+                            {
+                                var portion = new SuggestionPersonPortion();
+
+                                if (portionElement.TryGetProperty("person", out var person))
+                                    portion.Person = person.GetString() ?? string.Empty;
+
+                                if (portionElement.TryGetProperty("portions", out var portions))
+                                    portion.Portions = portions.GetInt32();
+
+                                if (portionElement.TryGetProperty("quantityGuide", out var quantityGuide))
+                                    portion.QuantityGuide = quantityGuide.GetString() ?? string.Empty;
+
+                                if (portionElement.TryGetProperty("estimatedCalories", out var estimatedCalories))
+                                    portion.EstimatedCalories = (float)estimatedCalories.GetDouble();
+
+                                if (portionElement.TryGetProperty("note", out var note))
+                                    portion.Note = note.GetString();
+
+                                if (portion.Portions <= 0)
+                                    portion.Portions = 1;
+
+                                suggestion.PerPersonPortions.Add(portion);
                             }
                         }
 

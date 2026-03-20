@@ -30,6 +30,7 @@ public class MealPrepDbContext : DbContext
     public DbSet<AIConfiguration> AIConfigurations { get; set; }
     public DbSet<AIOperationLog> AIOperationLogs { get; set; }
     public DbSet<FamilyMember> FamilyMembers { get; set; }
+    public DbSet<Shipper> Shippers { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -73,6 +74,7 @@ public class MealPrepDbContext : DbContext
         modelBuilder.Entity<AIConfiguration>().HasKey(e => e.Id).IsClustered(false);
         modelBuilder.Entity<AIOperationLog>().HasKey(e => e.Id).IsClustered(false);
         modelBuilder.Entity<FamilyMember>().HasKey(e => e.Id).IsClustered(false);
+        modelBuilder.Entity<Shipper>().HasKey(e => e.Id).IsClustered(false);
     }
     
     private void ConfigureAIEntities(ModelBuilder modelBuilder)
@@ -262,6 +264,20 @@ public class MealPrepDbContext : DbContext
             .WithOne(d => d.Order)
             .HasForeignKey<DeliverySchedule>(d => d.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // One-to-many: Shipper to DeliverySchedules
+        modelBuilder.Entity<Shipper>()
+            .HasMany(s => s.DeliverySchedules)
+            .WithOne(d => d.Shipper)
+            .HasForeignKey(d => d.ShipperId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        // Optional one-to-one link: Account (DeliveryMan) to Shipper profile
+        modelBuilder.Entity<Shipper>()
+            .HasOne(s => s.Account)
+            .WithMany()
+            .HasForeignKey(s => s.AccountId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
     
     private void ConfigureIndexes(ModelBuilder modelBuilder)
@@ -286,6 +302,14 @@ public class MealPrepDbContext : DbContext
         // Index on FridgeItem for account queries
         modelBuilder.Entity<FridgeItem>()
             .HasIndex(fi => new { fi.AccountId, fi.ExpiryDate });
+
+        modelBuilder.Entity<Shipper>()
+            .HasIndex(s => s.IsActive);
+
+        modelBuilder.Entity<Shipper>()
+            .HasIndex(s => s.AccountId)
+            .IsUnique()
+            .HasFilter("[AccountId] IS NOT NULL");
     }
     
     private void ConfigureConstraints(ModelBuilder modelBuilder)
@@ -401,5 +425,14 @@ public class MealPrepDbContext : DbContext
             .Property(ds => ds.DriverContact)
             .IsRequired()
             .HasMaxLength(100);
+
+        modelBuilder.Entity<Shipper>()
+            .Property(s => s.FullName)
+            .IsRequired()
+            .HasMaxLength(200);
+
+        modelBuilder.Entity<Shipper>()
+            .Property(s => s.ContactPhone)
+            .HasMaxLength(50);
     }
 }

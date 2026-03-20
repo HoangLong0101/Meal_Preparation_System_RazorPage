@@ -29,6 +29,7 @@ namespace MealPrepService.DataAccessLayer.Repositories
         IRepository<RevenueReport> RevenueReports { get; }
         IRepository<AIConfiguration> AIConfigurations { get; }
         IRepository<FamilyMember> FamilyMembers { get; }
+        IRepository<Shipper> Shippers { get; }
         
         // AIOperationLog uses int ID, not Guid, so we need direct DbSet access
         DbSet<AIOperationLog> AIOperationLogs { get; }

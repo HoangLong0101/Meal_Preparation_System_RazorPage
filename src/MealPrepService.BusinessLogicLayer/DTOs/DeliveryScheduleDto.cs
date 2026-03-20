@@ -4,6 +4,8 @@ public class DeliveryScheduleDto
 {
     public Guid Id { get; set; }
     public Guid OrderId { get; set; }
+    public Guid? ShipperId { get; set; }
+    public string? ShipperName { get; set; }
     public DateTime DeliveryTime { get; set; }
     public string Address { get; set; } = string.Empty;
     public string DriverContact { get; set; } = string.Empty;

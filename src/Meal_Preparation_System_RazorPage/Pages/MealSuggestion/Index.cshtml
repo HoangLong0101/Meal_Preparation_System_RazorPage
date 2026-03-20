@@ -520,7 +520,7 @@
                         <span>Who are you cooking for?</span>
                     </div>
                     <p style="font-size: 13px; color: #888; margin-bottom: 14px;">
-                        Add family members so AI can suggest meals suitable for everyone
+                        Add family members so AI can suggest meals suitable for everyone with separate portions
                     </p>
                     <div id="familyMembersContainer">
                         @if (Model.FamilyMembers != null)
@@ -542,6 +542,8 @@
                                     </select>
                                     <input type="text" name="FamilyMembers[@i].Note" placeholder="Notes (e.g. diabetic, vegetarian)"
                                            value="@Model.FamilyMembers[i].Note" style="flex: 1;" />
+                                     <input type="number" name="FamilyMembers[@i].Portion" placeholder="Portion" min="1" max="10"
+                                         value="@(Model.FamilyMembers[i].Portion > 0 ? Model.FamilyMembers[i].Portion : 1)" style="width: 110px;" />
                                     <button type="button" class="btn-remove-member" onclick="removeFamilyMember(this)">
                                         <i class="bi bi-trash"></i>
                                     </button>
@@ -641,6 +643,7 @@
                     <option value="Pregnant">🤰 Pregnant</option>
                 </select>
                 <input type="text" name="FamilyMembers[${index}].Note" placeholder="Notes (e.g. diabetic, vegetarian)" style="flex: 1;" />
+                <input type="number" name="FamilyMembers[${index}].Portion" placeholder="Portion" min="1" max="10" value="1" style="width: 110px;" />
                 <button type="button" class="btn-remove-member" onclick="removeFamilyMember(this)">
                     <i class="bi bi-trash"></i>
                 </button>`;
@@ -654,6 +657,7 @@
             rows.forEach(function(row, i) {
                 row.querySelector('select').name = 'FamilyMembers[' + i + '].Role';
                 row.querySelector('input[type="text"]').name = 'FamilyMembers[' + i + '].Note';
+                row.querySelector('input[type="number"]').name = 'FamilyMembers[' + i + '].Portion';
             });
         }
     </script>

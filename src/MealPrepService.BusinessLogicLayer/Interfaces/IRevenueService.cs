@@ -11,5 +11,7 @@ namespace MealPrepService.BusinessLogicLayer.Interfaces
         Task<RevenueReportDto> GetMonthlyReportAsync(int year, int month);
         Task<decimal> GetYearlyRevenueAsync(int year);
         Task<DashboardStatsDto> GetDashboardStatsAsync();
+        Task<List<DishRevenueDto>> GetTopSellingDishesAsync(DateTime startDate, DateTime endDate, int topCount = 5);
+        Task<List<RevenueTrendPointDto>> GetRevenueTrendAsync(int months = 6);
     }
 }

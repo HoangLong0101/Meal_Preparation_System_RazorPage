@@ -10,15 +10,24 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
     public class OrdersModel : PageModel
     {
         private readonly IOrderService _orderService;
+        private readonly IDeliveryService _deliveryService;
+        private readonly IShipperService _shipperService;
         private readonly IHubContext<MealPrepHub> _hubContext;
 
-        public OrdersModel(IOrderService orderService, IHubContext<MealPrepHub> hubContext)
+        public OrdersModel(
+            IOrderService orderService,
+            IDeliveryService deliveryService,
+            IShipperService shipperService,
+            IHubContext<MealPrepHub> hubContext)
         {
             _orderService = orderService;
+            _deliveryService = deliveryService;
+            _shipperService = shipperService;
             _hubContext = hubContext;
         }
 
         public IEnumerable<OrderDto> Orders { get; set; } = [];
+        public IEnumerable<ShipperDto> AvailableShippers { get; set; } = [];
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -27,6 +36,7 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
                 return RedirectToPage("/Account/Login");
 
             Orders = await _orderService.GetAllOrdersAsync();
+            AvailableShippers = await _shipperService.GetActiveShippersAsync();
             return Page();
         }
 
@@ -47,6 +57,25 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
                     .SendAsync("OrderStatusUpdated", orderId.ToString(), newStatus);
 
                 TempData["SuccessMessage"] = $"Order status updated to '{newStatus}'.";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = ex.Message;
+            }
+
+            return RedirectToPage();
+        }
+
+        public async Task<IActionResult> OnPostAssignShipperAsync(Guid orderId, Guid shipperId)
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role is not ("Admin" or "Manager"))
+                return RedirectToPage("/Account/Login");
+
+            try
+            {
+                await _deliveryService.AssignShipperAsync(orderId, shipperId);
+                TempData["SuccessMessage"] = "Shipper assigned successfully.";
             }
             catch (Exception ex)
             {
