@@ -23,6 +23,16 @@
     <p class="mb-0">Overview of your meal prep business</p>
 </div>
 
+@if (!string.IsNullOrWhiteSpace(Model.ExportMessage))
+{
+    <div class="alert alert-success" role="alert">@Model.ExportMessage</div>
+}
+
+@if (!string.IsNullOrWhiteSpace(Model.ExportError))
+{
+    <div class="alert alert-danger" role="alert">@Model.ExportError</div>
+}
+
 <div class="row g-4 mb-4">
     <div class="col-md-2">
         <div class="card-modern p-4 text-center">
@@ -62,12 +72,12 @@
     </div>
 </div>
 
-@if (Model.CurrentMonthReport != null)
-{
-    <div class="row g-4 mb-4">
-        <div class="col-md-6">
-            <div class="card-modern p-4">
-                <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2" style="color: var(--clr-primary);"></i>Revenue Breakdown — @DateTime.Today.ToString("MMMM yyyy")</h5>
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card-modern p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-bar-chart me-2" style="color: var(--clr-primary);"></i>Revenue Breakdown — @DateTime.Today.ToString("MMMM yyyy")</h5>
+            @if (Model.CurrentMonthReport != null)
+            {
                 <div class="d-flex justify-content-between align-items-center py-2" style="border-bottom: 1px solid var(--clr-border);">
                     <span>Subscription Revenue</span>
                     <span class="fw-bold">@Model.CurrentMonthReport.TotalSubscriptionRevenue.ToString("N0") ₫</span>
@@ -80,26 +90,35 @@
                     <span class="fw-bold">Total</span>
                     <span class="fw-bold fs-5" style="color: var(--clr-primary);">@Model.CurrentMonthReport.TotalRevenue.ToString("N0") ₫</span>
                 </div>
-            </div>
+            }
+            else
+            {
+                <p class="text-muted mb-0">Chưa có revenue report tháng hiện tại. Bạn vẫn có thể export dữ liệu dashboard.</p>
+            }
         </div>
-        <div class="col-md-6">
-            <div class="card-modern p-4">
-                <h5 class="fw-bold mb-3"><i class="bi bi-lightning me-2" style="color: var(--clr-warning);"></i>Quick Actions</h5>
-                <div class="d-flex flex-column gap-2">
-                    <a asp-page="/Admin/MenuManagement" class="btn btn-outline-primary">
-                        <i class="bi bi-calendar-plus me-2"></i>Manage Today's Menu
-                    </a>
-                    <a asp-page="/Admin/Orders" class="btn btn-outline-primary">
-                        <i class="bi bi-bag-check me-2"></i>View All Orders
-                    </a>
-                    <a asp-page="/Admin/Accounts" class="btn btn-outline-primary">
-                        <i class="bi bi-people me-2"></i>Manage Staff
-                    </a>
-                </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-modern p-4">
+            <h5 class="fw-bold mb-3"><i class="bi bi-lightning me-2" style="color: var(--clr-warning);"></i>Quick Actions</h5>
+            <div class="d-flex flex-column gap-2">
+                <a asp-page="/Admin/MenuManagement" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar-plus me-2"></i>Manage Today's Menu
+                </a>
+                <a asp-page="/Admin/Orders" class="btn btn-outline-primary">
+                    <i class="bi bi-bag-check me-2"></i>View All Orders
+                </a>
+                <a asp-page="/Admin/Accounts" class="btn btn-outline-primary">
+                    <i class="bi bi-people me-2"></i>Manage Staff
+                </a>
+                <form method="post" asp-page-handler="ExportGoogleSheet" class="m-0">
+                    <button type="submit" class="btn btn-outline-primary w-100">
+                        <i class="bi bi-file-earmark-spreadsheet me-2"></i>Export report to Google Sheets
+                    </button>
+                </form>
             </div>
         </div>
     </div>
-}
+</div>
 
 <div class="row g-4 mb-4">
     <div class="col-lg-7">

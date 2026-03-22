@@ -20,17 +20,14 @@ namespace MealPrepService.BusinessLogicLayer.Services
 
         public async Task<DailyMenuDto> CreateDailyMenuAsync(DateTime menuDate)
         {
-            // Validate menu date is not in the past
-            if (menuDate.Date < DateTime.UtcNow.Date)
-            {
-                throw new BusinessException("Menu date cannot be in the past");
-            }
+            var targetWeekday = menuDate.DayOfWeek;
 
-            // Check if menu already exists for this date
-            var existingMenu = await _unitOfWork.DailyMenus.GetByDateAsync(menuDate.Date);
+            // Check if a template menu already exists for this weekday
+            var allMenus = await _unitOfWork.DailyMenus.GetAllMenusAsync();
+            var existingMenu = allMenus.FirstOrDefault(m => m.MenuDate.DayOfWeek == targetWeekday);
             if (existingMenu != null)
             {
-                throw new BusinessException($"Menu already exists for date {menuDate:yyyy-MM-dd}");
+                throw new BusinessException($"Menu already exists for {targetWeekday}");
             }
 
             // Create daily menu entity with draft status
@@ -179,11 +176,6 @@ namespace MealPrepService.BusinessLogicLayer.Services
             if (menu.Status != "inactive")
             {
                 throw new BusinessException("Only inactive menus can be reactivated");
-            }
-
-            if (menu.MenuDate.Date < DateTime.Today)
-            {
-                throw new BusinessException("Cannot reactivate a menu for a past date");
             }
 
             menu.Status = "active";

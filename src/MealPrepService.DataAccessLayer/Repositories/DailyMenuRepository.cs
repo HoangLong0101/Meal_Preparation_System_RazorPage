@@ -15,33 +15,45 @@ namespace MealPrepService.DataAccessLayer.Repositories
 
         public async Task<DailyMenu?> GetByDateAsync(DateTime date)
         {
-            var dateOnly = date.Date;
-            return await _dbSet
+            var targetDayOfWeek = date.DayOfWeek;
+
+            var menus = await _dbSet
                 .Include(dm => dm.MenuMeals)
                     .ThenInclude(mm => mm.Recipe)
-                .FirstOrDefaultAsync(dm => dm.MenuDate.Date == dateOnly);
+                .ToListAsync();
+
+            return menus
+                .Where(dm => dm.MenuDate.DayOfWeek == targetDayOfWeek)
+                .OrderBy(dm => dm.Status == "active" ? 0 : dm.Status == "draft" ? 1 : 2)
+                .ThenByDescending(dm => dm.UpdatedAt ?? dm.CreatedAt)
+                .FirstOrDefault();
         }
 
         public async Task<IEnumerable<DailyMenu>> GetWeeklyMenuAsync(DateTime startDate)
         {
-            var endDate = startDate.AddDays(7);
-            return await _dbSet
+            var menus = await _dbSet
                 .Include(dm => dm.MenuMeals)
                     .ThenInclude(mm => mm.Recipe)
-                .Where(dm => dm.MenuDate >= startDate 
-                    && dm.MenuDate < endDate 
-                    && dm.Status == "active")
-                .OrderBy(dm => dm.MenuDate)
+                .Where(dm => dm.Status == "active")
                 .ToListAsync();
+
+            return menus
+                .OrderBy(dm => (int)dm.MenuDate.DayOfWeek)
+                .ThenBy(dm => dm.MenuDate)
+                .ToList();
         }
 
         public async Task<IEnumerable<DailyMenu>> GetAllMenusAsync()
         {
-            return await _dbSet
+            var menus = await _dbSet
                 .Include(dm => dm.MenuMeals)
                     .ThenInclude(mm => mm.Recipe)
-                .OrderByDescending(dm => dm.MenuDate)
                 .ToListAsync();
+
+            return menus
+                .OrderBy(dm => (int)dm.MenuDate.DayOfWeek)
+                .ThenByDescending(dm => dm.CreatedAt)
+                .ToList();
         }
 
         public async Task<DailyMenu?> GetWithMealsAsync(Guid menuId)

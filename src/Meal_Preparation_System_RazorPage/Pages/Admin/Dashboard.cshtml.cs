@@ -1,5 +1,6 @@
 using MealPrepService.BusinessLogicLayer.DTOs;
 using MealPrepService.BusinessLogicLayer.Interfaces;
+using Meal_Preparation_System_RazorPage.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
@@ -10,11 +11,16 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
     {
         private readonly IRevenueService _revenueService;
         private readonly ILLMService _llmService;
+        private readonly IGoogleSheetsExportService _googleSheetsExportService;
 
-        public DashboardModel(IRevenueService revenueService, ILLMService llmService)
+        public DashboardModel(
+            IRevenueService revenueService,
+            ILLMService llmService,
+            IGoogleSheetsExportService googleSheetsExportService)
         {
             _revenueService = revenueService;
             _llmService = llmService;
+            _googleSheetsExportService = googleSheetsExportService;
         }
 
         public DashboardStatsDto Stats { get; set; } = new();
@@ -24,6 +30,10 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
         public List<AIGeneratedRecipe> AiSuggestedMenus { get; set; } = new();
         public string AiInsightSummary { get; set; } = "Bấm 'Dự đoán xu hướng người dùng' để gọi AI và nhận gợi ý menu.";
         public bool HasAiPrediction { get; set; }
+        [TempData]
+        public string? ExportMessage { get; set; }
+        [TempData]
+        public string? ExportError { get; set; }
         public string RevenueTrendJson => JsonSerializer.Serialize(RevenueTrend.Select(item => item.Label));
         public string RevenueDataJson => JsonSerializer.Serialize(RevenueTrend.Select(item => item.Revenue));
         public string DishLabelsJson => JsonSerializer.Serialize(TopSellingDishes.Select(item => item.RecipeName));
@@ -50,6 +60,36 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
             await LoadAiDemandInsightsAsync();
 
             return Page();
+        }
+
+        public async Task<IActionResult> OnPostExportGoogleSheetAsync()
+        {
+            var role = HttpContext.Session.GetString("Role");
+            if (role is not ("Admin" or "Manager"))
+                return RedirectToPage("/Account/Login");
+
+            await LoadDashboardDataAsync();
+
+            try
+            {
+                await _googleSheetsExportService.ExportDashboardReportAsync(new DashboardExportPayload
+                {
+                    Stats = Stats,
+                    CurrentMonthReport = CurrentMonthReport,
+                    RevenueTrend = RevenueTrend,
+                    TopSellingDishes = TopSellingDishes
+                });
+
+                ExportMessage = "Xuất báo cáo lên Google Sheets thành công.";
+                ExportError = null;
+            }
+            catch (Exception ex)
+            {
+                ExportError = $"Không thể xuất Google Sheets: {ex.Message}";
+                ExportMessage = null;
+            }
+
+            return RedirectToPage();
         }
 
         private async Task LoadDashboardDataAsync()

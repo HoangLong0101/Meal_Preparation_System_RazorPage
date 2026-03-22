@@ -23,9 +23,11 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
         public DailyMenuDto? TodayMenu { get; set; }
         public IEnumerable<DailyMenuDto> AllMenus { get; set; } = [];
         public IEnumerable<RecipeDto> AvailableRecipes { get; set; } = [];
+        public IEnumerable<DayOfWeek> WeekdayOptions { get; set; } =
+            Enum.GetValues<DayOfWeek>().OrderBy(d => d == DayOfWeek.Sunday ? 7 : (int)d);
 
         [BindProperty]
-        public DateTime NewMenuDate { get; set; } = DateTime.Today;
+        public DayOfWeek NewMenuWeekday { get; set; } = DateTime.Today.DayOfWeek;
 
         [BindProperty]
         public Guid AddToMenuId { get; set; }
@@ -57,8 +59,9 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
 
             try
             {
-                await _menuService.CreateDailyMenuAsync(NewMenuDate);
-                TempData["SuccessMessage"] = $"Menu created for {NewMenuDate:MMM dd, yyyy}.";
+                var menuDate = GetNextOccurrence(NewMenuWeekday);
+                await _menuService.CreateDailyMenuAsync(menuDate);
+                TempData["SuccessMessage"] = $"Weekly menu template created for {NewMenuWeekday}.";
             }
             catch (Exception ex)
             {
@@ -200,6 +203,13 @@ namespace Meal_Preparation_System_RazorPage.Pages.Admin
             TodayMenu = await _menuService.GetByDateAsync(DateTime.Today);
             AllMenus = await _menuService.GetAllMenusAsync();
             AvailableRecipes = await _recipeService.GetAllAsync();
+        }
+
+        private static DateTime GetNextOccurrence(DayOfWeek dayOfWeek)
+        {
+            var today = DateTime.Today;
+            var daysUntil = ((int)dayOfWeek - (int)today.DayOfWeek + 7) % 7;
+            return today.AddDays(daysUntil);
         }
     }
 }

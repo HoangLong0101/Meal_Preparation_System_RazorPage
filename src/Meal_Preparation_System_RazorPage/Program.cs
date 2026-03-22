@@ -4,6 +4,7 @@ using MealPrepService.BusinessLogicLayer.Services;
 using Microsoft.EntityFrameworkCore;
 using MealPrepService.DataAccessLayer.Data;
 using Meal_Preparation_System_RazorPage.Hubs;
+using Meal_Preparation_System_RazorPage.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -67,6 +68,7 @@ builder.Services.AddScoped<IAllergyService, AllergyService>();
 builder.Services.AddScoped<IFamilyMemberService, FamilyMemberService>();
 builder.Services.AddScoped<IAIRecommendationService, AIRecommendationService>();
 builder.Services.AddScoped<IAIOperationLogger, AIOperationLogger>();
+builder.Services.AddScoped<IGoogleSheetsExportService, GoogleSheetsExportService>();
 
 // AI service dùng HttpClientFactory
 builder.Services.AddHttpClient<INutritionService, NutritionService>();
