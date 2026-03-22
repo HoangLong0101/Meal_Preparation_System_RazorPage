@@ -267,69 +267,88 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
                 <div class="collapse navbar-collapse" id="navbarNav">
+                    @{
+                        var accountId = Context.Session.GetString("AccountId");
+                        var role = Context.Session.GetString("Role") ?? string.Empty;
+                        var isSignedIn = accountId != null;
+                        var isAdmin = role is "Admin" or "Manager";
+                        var isDeliveryMan = role == "DeliveryMan";
+                    }
                     <ul class="navbar-nav me-auto">
-                        @if (Context.Session.GetString("AccountId") != null)
+                        @if (isAdmin)
                         {
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/MealSuggestion/Index">
-                                    <i class="bi bi-stars me-1"></i>Meal Suggestions
+                                <a class="nav-link nav-link-custom" asp-page="/Admin/Dashboard">
+                                    <i class="bi bi-speedometer2 me-1"></i>Dashboard
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/MealPlans/Index">
-                                    <i class="bi bi-calendar-week me-1"></i>Weekly Plan
+                                <a class="nav-link nav-link-custom" asp-page="/Admin/MenuManagement">
+                                    <i class="bi bi-calendar3 me-1"></i>Menu Management
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" asp-page="/Admin/Orders">
+                                    <i class="bi bi-bag-check me-1"></i>Order Management
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link nav-link-custom" asp-page="/Admin/Accounts">
+                                    <i class="bi bi-people me-1"></i>Staff Management
                                 </a>
                             </li>
                         }
-                        @if (Context.Session.GetString("Role") is "Admin" or "Manager")
+                        else
                         {
-                            <li class="nav-item dropdown">
-                                <a class="nav-link nav-link-custom dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="bi bi-gear me-1"></i>Admin
-                                </a>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" asp-page="/Admin/Dashboard"><i class="bi bi-speedometer2 me-2"></i>Dashboard</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Admin/MenuManagement"><i class="bi bi-calendar3 me-2"></i>Menu Management</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Admin/Orders"><i class="bi bi-bag-check me-2"></i>All Orders</a></li>
-                                    <li><a class="dropdown-item" asp-page="/Admin/Accounts"><i class="bi bi-people me-2"></i>Staff Accounts</a></li>
-                                </ul>
-                            </li>
-                        }
-                        @if (Context.Session.GetString("Role") == "DeliveryMan")
-                        {
+                            @if (isSignedIn)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link nav-link-custom" asp-area="" asp-page="/MealSuggestion/Index">
+                                        <i class="bi bi-stars me-1"></i>Meal Suggestions
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link nav-link-custom" asp-area="" asp-page="/MealPlans/Index">
+                                        <i class="bi bi-calendar-week me-1"></i>Weekly Plan
+                                    </a>
+                                </li>
+                            }
+                            @if (isDeliveryMan)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link nav-link-custom" asp-area="" asp-page="/Delivery/Index">
+                                        <i class="bi bi-truck me-1"></i>Delivery
+                                    </a>
+                                </li>
+                            }
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Delivery/Index">
-                                    <i class="bi bi-truck me-1"></i>Delivery
-                                </a>
-                            </li>
-                        }
-                        <li class="nav-item">
-                            <a class="nav-link nav-link-custom" asp-area="" asp-page="/Menu/Index">
-                                <i class="bi bi-cup-hot me-1"></i>Menu
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link nav-link-custom" asp-area="" asp-page="/Recipes/Index">
-                                <i class="bi bi-book me-1"></i>Recipes
-                            </a>
-                        </li>
-                        @if (Context.Session.GetString("AccountId") != null)
-                        {
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Nutrition/Calculator">
-                                    <i class="bi bi-calculator me-1"></i>Nutrition
+                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Menu/Index">
+                                    <i class="bi bi-cup-hot me-1"></i>Menu
                                 </a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Fridge/Index">
-                                    <i class="bi bi-box-seam me-1"></i>Inventory
+                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Recipes/Index">
+                                    <i class="bi bi-book me-1"></i>Recipes
                                 </a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link nav-link-custom" asp-area="" asp-page="/Orders/Index">
-                                    <i class="bi bi-bag me-1"></i>Orders
-                                </a>
-                            </li>
+                            @if (isSignedIn)
+                            {
+                                <li class="nav-item">
+                                    <a class="nav-link nav-link-custom" asp-area="" asp-page="/Nutrition/Calculator">
+                                        <i class="bi bi-calculator me-1"></i>Nutrition
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link nav-link-custom" asp-area="" asp-page="/Fridge/Index">
+                                        <i class="bi bi-box-seam me-1"></i>Inventory
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link nav-link-custom" asp-area="" asp-page="/Orders/Index">
+                                        <i class="bi bi-bag me-1"></i>Orders
+                                    </a>
+                                </li>
+                            }
                         }
                     </ul>
 
